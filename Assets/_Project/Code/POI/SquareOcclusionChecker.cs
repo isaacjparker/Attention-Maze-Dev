@@ -1,0 +1,155 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SquareOcclusionChecker : MonoBehaviour
+{
+
+    private SquareData data;
+    private bool lastVisible = false;
+    private Camera mainCam;
+
+
+    // For gizmo drawing
+    private Vector3[] lastSamplePoints;
+    private bool[] lastHits;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        data = GetComponent<SquareData>();
+        mainCam = Camera.main;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        bool isVisible = CheckUnoccluded();
+
+        if (isVisible != lastVisible)
+        { 
+            data.SetVisible(isVisible);
+            lastVisible = isVisible;
+        }
+    }
+
+    bool CheckUnoccluded()
+    {
+        /*
+        //float halfX = transform.localScale.x * 0.5f;
+        //float halfY = transform.localScale.y * 0.5f;
+        //float frontZ = transform.localScale.z * 0.5f + 0.01f; // Adjust if -Z is exposed
+
+        // Raycast from camera to square center
+        Vector3 camPos = mainCam.transform.position;
+
+        lastSamplePoints = new Vector3[localOffsets.Length];
+        lastHits = new bool[localOffsets.Length];
+        bool foundVisible = false;
+
+        for (int i = 0; i < localOffsets.Length; i++)
+        {
+            Vector3 worldPoint = transform.TransformPoint(localOffsets[i]);
+            lastSamplePoints[i] = worldPoint;
+
+            Vector3 dir = worldPoint - camPos;
+            float dist = dir.magnitude;
+            Ray ray = new Ray(camPos, dir.normalized);
+            if (Physics.Raycast(ray, out RaycastHit hit, dist + 0.05f))
+            {
+                if (hit.collider.gameObject == gameObject)
+                {
+                    lastHits[i] = true;
+                    foundVisible = true;
+                }
+                else
+                {
+                    lastHits[i] = false;
+                }
+            }
+            else
+            {
+                lastHits[i] = false;
+            }
+        }
+        return foundVisible;
+        */
+
+
+        float halfX = 0.5f;
+        float halfY = 0.5f;
+        float frontZ = 0.5f - 0.01f; // Adjust if -Z is exposed
+
+        Vector3[] localOffsets = new Vector3[]
+        {
+            new Vector3(-halfX, halfY, frontZ),
+            new Vector3(halfX, halfY, frontZ),
+            new Vector3(-halfX, -halfY, frontZ),
+            new Vector3(halfX, -halfY, frontZ),
+        };
+
+        bool anyCornerInView = false;
+        Vector3[] worldPoints = new Vector3[localOffsets.Length];
+
+        // Convert all corners to world space and check frustrum
+        for (int i = 0; i < localOffsets.Length; i++)
+        { 
+            Vector3 worldPoint = transform.TransformPoint(localOffsets[i]);
+            worldPoints[i] = worldPoint;
+            if (IsInCameraView(mainCam, worldPoint))
+                anyCornerInView = true;
+        }
+
+        if (!anyCornerInView)
+            return false; // Not in view, no need to check occlusion
+
+        for (int i = 0; i < localOffsets.Length; i++)
+        {
+            Vector3 worldPoint = worldPoints[i];
+            if (!IsInCameraView(mainCam, worldPoint))
+                continue; // Skip occluded/out-of-view corners
+
+            Vector3 camPos = mainCam.transform.position;
+            Vector3 dir = worldPoint - camPos;
+            float dist = dir.magnitude;
+            Ray ray = new Ray(camPos, dir.normalized);
+
+            if (Physics.Raycast(ray, out RaycastHit hit, dist + 0.05f))
+            {
+                if (hit.collider.gameObject == this.gameObject)
+                    return true; // This corner is visible and unoccluded
+            }
+        }
+
+        // No corners were both in view and unoccluded
+        return false;
+        
+    }
+
+    bool IsInCameraView(Camera cam, Vector3 worldPoint)
+    { 
+        Vector3 viewportPos = cam.WorldToViewportPoint(worldPoint);
+        return viewportPos.z > 0 && viewportPos.x >= 0 && viewportPos.x <= 1 && viewportPos.y >= 0 && viewportPos.y <= 1;
+    }
+
+    /*
+    // Draw the sample points and rays in the editor
+    void OnDrawGizmos()
+    {
+        if (lastSamplePoints == null || lastHits == null) return;
+        if (mainCam == null) return;
+
+        Vector3 camPos = mainCam.transform.position;
+
+        for (int i = 0; i < lastSamplePoints.Length; i++)
+        {
+            Gizmos.color = lastHits[i] ? Color.green : Color.red;
+            Gizmos.DrawSphere(lastSamplePoints[i], 0.05f);
+
+            // Draw ray from camera to sample point
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(camPos, lastSamplePoints[i]);
+        }
+    }
+    */
+}
