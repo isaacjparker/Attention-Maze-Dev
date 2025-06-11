@@ -23,14 +23,20 @@ public class AttentionLogger : MonoBehaviour
         Vector3 camForward = playerCam.transform.forward;
         float timestamp = Time.time;
 
-        foreach (var square in visible)
+        foreach (var poi in visible)
         { 
-            Vector3 toSquare = square.transform.position - camPos;
-            float distance = toSquare.magnitude;
-            float dot = Vector3.Dot(camForward, toSquare.normalized);
+            Vector3 toPoi = poi.transform.position - camPos;
+            float distance = toPoi.magnitude;
+            //float rawDot = Vector3.Dot(camForward, toSquare.normalized);
+            // throw away any "behind" values, so dot now runs 0 to 1 rather than -1 to 1
+            //float dot = Mathf.Clamp01(rawDot);
+
+            float angle = Vector3.Angle(camForward, toPoi); // in degrees, 0...180
+            // remap 0-90 deg to 1...0
+            float dot90 = 1f - Mathf.Clamp01(angle / 90f);
 
             // Replace with file/data logging as needed
-            Debug.Log($"[{timestamp:F2}] Square ID: {square.id}, Color: {square.colourType}, Distance: {distance:F2}, Dot: {dot:F2}");
+            Debug.Log($"[{timestamp:F2}] Square ID: {poi.id}, Color: {poi.colourType}, Distance: {distance:F2}, Dot90: {dot90:F2}");
 
         }
     }

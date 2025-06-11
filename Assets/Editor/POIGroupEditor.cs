@@ -22,6 +22,16 @@ public class POIGroupEditor : Editor
             // Mark dirty so the scene knows something changed
             EditorUtility.SetDirty(myTarget);
         }
+
+        GUILayout.Space(4);
+        GUI.backgroundColor = Color.red;
+        if (GUILayout.Button("Clear Prefabs"))
+        { 
+            myTarget.ClearPrefabs();
+            EditorUtility.SetDirty(myTarget);
+        }
+
+        //Reset background
         GUI.backgroundColor = Color.white;
     }
 }

@@ -140,4 +140,32 @@ public class POIGroup : MonoBehaviour
 #endif
         }
     }
+
+    /// <summary>
+    /// Destroys all spawned prefabs under each POIPos marker
+    /// and then clears the poiList.
+    /// </summary>
+    public void ClearPrefabs()
+    {
+        // Destroy any old spawned children under each POIPos
+        foreach (POIPos marker in poiList)
+        { 
+            Transform parentT = marker.transform;
+            for (int k = parentT.childCount - 1; k >= 0; k--)
+            {
+                GameObject old = parentT.GetChild(k).gameObject;
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                    DestroyImmediate(old);
+                else
+                    Destroy(old);
+#else
+                Destroy(old);
+#endif
+            }
+        }
+
+        // Empty out the list of marker
+        poiList.Clear();
+    }
 }

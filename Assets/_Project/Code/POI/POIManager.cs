@@ -41,20 +41,24 @@ public class POIManager : MonoBehaviour
         // 1) Gather all POIGroup, sort by z-position
         List<POIGroup> groups = FindObjectsOfType<POIGroup>().OrderBy(g => g.transform.position.z).ToList();
 
-        // 2) For each group...
-        for (int gi = 0; gi < groups.Count; gi++)
+        
+        foreach (POIGroup group in groups)
         {
-            POIGroup group = groups[gi];
-            bool isOddGroup = ((gi + 1) % 2) == 1;
+            // 2) COmpute bucket = floor(z/10)
+            float z = group.transform.position.z;
+            int bucket = Mathf.FloorToInt(z / 10f);
 
-            // 3) Pull out each POIData under that group's markers
+            // 3) Decide odd/even on the bucket, not on the loop index
+            bool isEvenBucket = (bucket % 2) == 0;
+
+            // 4) Pull out each POIData under that group's markers
             List<POIData> datas = group.poiList
                 .Select(marker => marker.GetComponentInChildren<POIData>())
                 .Where(d => d != null)
                 .ToList();
 
             // 4) Order by x ascending (odd) or descending (even)
-            if (isOddGroup)
+            if (isEvenBucket)
                 datas = datas.OrderBy(d => d.transform.position.x).ToList();
             else
                 datas = datas.OrderByDescending(d => d.transform.position.x).ToList();
