@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SquareOcclusionChecker : MonoBehaviour
+public class POIOcclusionChecker : MonoBehaviour
 {
 
-    private SquareData data;
+    private POIData data;
     private bool lastVisible = false;
     private Camera mainCam;
 
@@ -17,7 +17,7 @@ public class SquareOcclusionChecker : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        data = GetComponent<SquareData>();
+        data = GetComponent<POIData>();
         mainCam = Camera.main;
     }
 
@@ -35,47 +35,6 @@ public class SquareOcclusionChecker : MonoBehaviour
 
     bool CheckUnoccluded()
     {
-        /*
-        //float halfX = transform.localScale.x * 0.5f;
-        //float halfY = transform.localScale.y * 0.5f;
-        //float frontZ = transform.localScale.z * 0.5f + 0.01f; // Adjust if -Z is exposed
-
-        // Raycast from camera to square center
-        Vector3 camPos = mainCam.transform.position;
-
-        lastSamplePoints = new Vector3[localOffsets.Length];
-        lastHits = new bool[localOffsets.Length];
-        bool foundVisible = false;
-
-        for (int i = 0; i < localOffsets.Length; i++)
-        {
-            Vector3 worldPoint = transform.TransformPoint(localOffsets[i]);
-            lastSamplePoints[i] = worldPoint;
-
-            Vector3 dir = worldPoint - camPos;
-            float dist = dir.magnitude;
-            Ray ray = new Ray(camPos, dir.normalized);
-            if (Physics.Raycast(ray, out RaycastHit hit, dist + 0.05f))
-            {
-                if (hit.collider.gameObject == gameObject)
-                {
-                    lastHits[i] = true;
-                    foundVisible = true;
-                }
-                else
-                {
-                    lastHits[i] = false;
-                }
-            }
-            else
-            {
-                lastHits[i] = false;
-            }
-        }
-        return foundVisible;
-        */
-
-
         float halfX = 0.5f;
         float halfY = 0.5f;
         float frontZ = 0.5f - 0.01f; // Adjust if -Z is exposed

@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 961711766483728580}
   - component: {fileID: 4839718245312159944}
   m_Layer: 0
-  m_Name: POI_Green
+  m_Name: POI_Cube_Green
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

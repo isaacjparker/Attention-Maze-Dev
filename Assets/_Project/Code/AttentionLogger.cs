@@ -11,13 +11,14 @@ public class AttentionLogger : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            Debug.Log("Attention Indicated");
             LogVisibleSquares();
         }
     }
 
     void LogVisibleSquares()
     { 
-        var visible = VisibleSquaresManager.Instance.GetVisibleSquares();
+        var visible = POIManager.Instance.GetVisiblePOIs();
         Vector3 camPos = playerCam.transform.position;
         Vector3 camForward = playerCam.transform.forward;
         float timestamp = Time.time;

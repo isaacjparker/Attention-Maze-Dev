@@ -322,7 +322,6 @@ GameObject:
   - component: {fileID: 2600417807286676045}
   - component: {fileID: 905686976356935342}
   - component: {fileID: 4009478300847930814}
-  - component: {fileID: 6367994829372717911}
   m_Layer: 0
   m_Name: Body
   m_TagString: Untagged
@@ -462,15 +461,3 @@ MonoBehaviour:
   speed: 5
   rotationSpeed: 1
   checkpointRadius: 0.5
---- !u!114 &6367994829372717911
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8738576233149862126}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 89d068dbf692c3e4e8d82df67af66f2b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

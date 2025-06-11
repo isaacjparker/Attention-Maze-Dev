@@ -9,11 +9,11 @@ public class AttentionIndicator : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            HandleAttentionIndiciator();
+            HandleAttentionIndicator();
         }
     }
 
-    private void HandleAttentionIndiciator()
+    private void HandleAttentionIndicator()
     {
         Debug.Log("Attention Indicated");
     }
