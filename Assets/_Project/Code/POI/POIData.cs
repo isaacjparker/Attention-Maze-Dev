@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum POIColourType { RED, YELLOW, GREEN}
+public enum POIColourType { RED, YELLOW, GREEN, TEXT}
 public class POIData : MonoBehaviour
 {
     public int id;

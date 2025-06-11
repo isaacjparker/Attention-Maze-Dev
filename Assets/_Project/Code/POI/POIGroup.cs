@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Linq;       // for Sum()
+using TMPro;            // for TMP_Text
+using UnityEngine;
 using System.Collections.Generic;
 
 #if UNITY_EDITOR
@@ -35,6 +37,7 @@ public class POIGroup : MonoBehaviour
     [Space]
     [Tooltip("(Read‐only) This list is rebuilt whenever you click “Instantiate Prefabs.”")]
     public List<POIPos> poiList = new List<POIPos>();
+
 
     /// <summary>
     /// Call this from your custom Editor button. 
@@ -139,6 +142,16 @@ public class POIGroup : MonoBehaviour
             instance.name = chosen.name;
 #endif
         }
+
+        // 5) If all of these POIs are TEXT, do a post-layout pass:
+        if (poiList.All(marker =>
+        {
+            var data = marker.GetComponentInChildren<POIData>();
+            return data != null && data.colourType == POIColourType.TEXT;
+        }))
+        {
+            RepositionTextLabels();
+        }
     }
 
     /// <summary>
@@ -167,5 +180,62 @@ public class POIGroup : MonoBehaviour
 
         // Empty out the list of marker
         poiList.Clear();
+    }
+
+    /// <summary>
+    /// Re-centers each TextMeshPro child so that the *gap* between
+    /// adjacent words (their *actual* rendered edges) is constant
+    /// across the row.
+    /// </summary>
+    public void RepositionTextLabels()
+    {
+        int count = poiList.Count;
+        if (count < 2) return;
+
+        float firstX = poiList[0].transform.localPosition.x;
+        float lastX = poiList[count - 1].transform.localPosition.x;
+        float totalSpan = lastX - firstX;
+
+        // 1) Grab each instantiated prefab under the marker
+        Transform[] instances = new Transform[count];
+        for (int i = 0; i < count; i++)
+        {
+            if (poiList[i].transform.childCount == 0) continue;
+            instances[i] = poiList[i].transform.GetChild(0);
+        }
+
+        // 2) Measure widths from the TMP child of each instance
+        float[] widths = new float[count];
+        for (int i = 0; i < count; i++)
+        {
+            var inst = instances[i];
+            if (inst == null) continue;
+
+            // find the Text child anywhere under the prefab root
+            TMP_Text label = inst.GetComponentInChildren<TMP_Text>();
+            label.ForceMeshUpdate();
+            widths[i] = label.GetRenderedValues(false).x;
+        }
+
+        // 3) Solve for uniform gap
+        float occupied = widths.Sum();
+        float gap = (totalSpan - occupied) / (count - 1);
+
+        // 4) Reposition each instance so that its *edges* sit gap apart
+        float x = firstX + widths[0] / 2f;
+        for (int i = 0; i < count; i++)
+        {
+            var inst = instances[i];
+            if (inst == null) continue;
+
+            inst.localPosition = new Vector3(
+                x,
+                inst.localPosition.y,
+                inst.localPosition.z
+            );
+
+            if (i < count - 1)
+                x += (widths[i] / 2f) + gap + (widths[i + 1] / 2f);
+        }
     }
 }
