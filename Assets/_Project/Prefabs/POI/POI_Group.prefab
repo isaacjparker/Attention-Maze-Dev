@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1466095908522196883}
-  - component: {fileID: 2097466514984454205}
+  - component: {fileID: 5329475251350409028}
   m_Layer: 0
   m_Name: POI_Pos1
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4633702584573905}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
---- !u!114 &2097466514984454205
+--- !u!114 &5329475251350409028
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,7 +41,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 964718237181274762}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a989fa60a0d32d84bbaaa9d5d99237a5, type: 3}
+  m_Script: {fileID: 11500000, guid: 615891345a89a39459348fa3035797c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &7011594326273529118
@@ -93,7 +93,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   POIPrefabs: []
   InstantiateRandom: 0
-  poiList: []
+  markers: []
 --- !u!1 &7572620632719639054
 GameObject:
   m_ObjectHideFlags: 0
@@ -103,7 +103,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5819227290268109670}
-  - component: {fileID: 6640211659506381034}
+  - component: {fileID: 5381968637558727115}
   m_Layer: 0
   m_Name: POI_Pos2
   m_TagString: Untagged
@@ -126,7 +126,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4633702584573905}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
---- !u!114 &6640211659506381034
+--- !u!114 &5381968637558727115
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -135,7 +135,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7572620632719639054}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a989fa60a0d32d84bbaaa9d5d99237a5, type: 3}
+  m_Script: {fileID: 11500000, guid: 615891345a89a39459348fa3035797c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &7973992940790422876
@@ -147,7 +147,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1130219831766365773}
-  - component: {fileID: 4757755283194292185}
+  - component: {fileID: 1126623945308442564}
   m_Layer: 0
   m_Name: POI_Pos3
   m_TagString: Untagged
@@ -170,7 +170,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4633702584573905}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
---- !u!114 &4757755283194292185
+--- !u!114 &1126623945308442564
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -179,6 +179,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7973992940790422876}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a989fa60a0d32d84bbaaa9d5d99237a5, type: 3}
+  m_Script: {fileID: 11500000, guid: 615891345a89a39459348fa3035797c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

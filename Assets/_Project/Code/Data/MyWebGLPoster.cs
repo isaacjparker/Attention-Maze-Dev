@@ -1,54 +1,79 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class MyWebGLPoster : MonoBehaviour
-{
-    [System.Serializable]
-    public class PlayerData
-    {
-        public string username;
-        public int score;
-    }
 
+/// <summary>
+/// Thin transport layer: receives a pre-formatted CSV line and POSTSs
+/// it to the research server. TelemtryManager handles batching,
+/// throttling, and formatting, so this class stays small.
+/// </summary>
+public class MyWebGLPoster : MonoBehaviour, IRowPoster
+{
+    [Tooltip("Absolute URL of the endpoint that accepts a CSV row payload.")]
+    [SerializeField]
+    private string _endpoint =
+        "https://my-small-research-server.onrender.com/submit-data";
+
+    /// <summary>
+    /// Optional callback: UI elements can subscribe to show success/error.
+    /// </summary>
     public event Action<string> OnPostResult;
 
-    public void SendDataToServer(string username, int score)
+    // ---------------------------------------------------------------------
+    // IRowPoster implementation — called by TelemetryManager
+    // ---------------------------------------------------------------------
+    public void PostRow(string csvRow)
     {
-        PlayerData pd = new PlayerData { username = username, score = score };
-        StartCoroutine(PostData("https://my-small-research-server.onrender.com/submit-data", pd));
+        if (string.IsNullOrWhiteSpace(csvRow))
+            return;
+
+        StartCoroutine(PostCsvRow(csvRow));
     }
 
-    IEnumerator PostData(string url, PlayerData data)
-    { 
-        string json = JsonUtility.ToJson(data);
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+    // ---------------------------------------------------------------------
+    // Coroutine that actually does the POST
+    // ---------------------------------------------------------------------
+    private IEnumerator PostCsvRow(string row)
+    {
+        // For simplicity we wrap the CSV line in a JSON object:
+        // { "row": "EventKind,Time,PosX,..." }
+        string jsonPayload = $"{{\"row\":\"{EscapeForJson(row)}\"}}";
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonPayload);
 
-        UnityWebRequest request = new UnityWebRequest(url, "POST");
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
+        using UnityWebRequest request =
+            new UnityWebRequest(_endpoint, "POST")
+            {
+                uploadHandler = new UploadHandlerRaw(bodyRaw),
+                downloadHandler = new DownloadHandlerBuffer()
+            };
+
         request.SetRequestHeader("Content-Type", "application/json");
 
         yield return request.SendWebRequest();
 
-        if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+        if (request.result is UnityWebRequest.Result.ConnectionError
+            or UnityWebRequest.Result.ProtocolError)
         {
-            string errorMessage = "Error: " + request.error;
-            //Debug.LogError(errorMessage);
-
-            // 2) Invoke the event so subscribers receive the error message
-            OnPostResult?.Invoke(errorMessage);
+            string msg = $"POST error: {request.error}";
+            Debug.Log(msg);
+            OnPostResult?.Invoke(msg);
         }
         else
-        {
-            string successMessage = "Success! Response: " + request.downloadHandler.text;
-            //Debug.Log(successMessage);
-
-            // 3) Invoke the event so subscribers receive the success message
-            OnPostResult?.Invoke(successMessage);
+        { 
+            string msg = $"POST ok: {request.downloadHandler.text}";
+            Debug.Log(msg);
+            OnPostResult?.Invoke(msg);
         }
+            
     }
+
+    // Simple JSON string escape (quotes and backslashes)
+    private static string EscapeForJson(string s) =>
+        s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+    
+    
 }

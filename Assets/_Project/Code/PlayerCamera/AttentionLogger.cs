@@ -2,23 +2,38 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Detects when the user presses the space bar and tells TelemtryManager
+/// to publish a Spacebar event. Nothing more.
+/// </summary>
+[DisallowMultipleComponent]
 public class AttentionLogger : MonoBehaviour
 {
-    public Camera playerCam; // Assign your camera here if not Camera.main
+    // Optional compile-time flag so designers can switch off console spam.
+    [SerializeField] private bool _debugLogInEditor = true;
+
 
     // Update is called once per frame
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            Debug.Log("Attention Indicated");
-            LogVisibleSquares();
+            // Fire the telemtry event.
+            TelemetryManager.Instance?.PublishSpaceBar();
+
+#if UNITY_EDITOR
+            if (_debugLogInEditor)
+                Debug.Log($"[{Time.time:F2}] AttentionLogger - space bar pressed, event queued.");
+
+#endif
         }
     }
 
+
+    /*
     void LogVisibleSquares()
     { 
-        var visible = POIManager.Instance.GetVisiblePOIs();
+        var visible = PointOfInterestManager.Instance.GetVisiblePOIs();
         Vector3 camPos = playerCam.transform.position;
         Vector3 camForward = playerCam.transform.forward;
         float timestamp = Time.time;
@@ -40,4 +55,5 @@ public class AttentionLogger : MonoBehaviour
 
         }
     }
+    */
 }

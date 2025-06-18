@@ -1,29 +1,40 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class POIOcclusionChecker : MonoBehaviour
+/// <summary>
+/// 1) Determines if its POI is currently visible & unoccluded
+/// 2) Updates distance and dotProduct every frame for telemtry.
+/// </summary>
+public class PointOfInterestOcclusionChecker : MonoBehaviour
 {
 
-    private POIData data;
+    private PointOfInterestData data;
     private bool lastVisible = false;
     private Camera mainCam;
 
 
-    // For gizmo drawing
-    private Vector3[] lastSamplePoints;
-    private bool[] lastHits;
-
-    // Start is called before the first frame update
     void Start()
     {
-        data = GetComponent<POIData>();
+        data = GetComponentInChildren<PointOfInterestData>();
         mainCam = Camera.main;
     }
 
-    // Update is called once per frame
+
     void Update()
     {
+        if (mainCam == null) return;
+
+        // --- Update distance & dotProduct each frame -------------------------
+        Vector3 camPos = mainCam.transform.position;
+        Vector3 toPoi = transform.position - camPos;
+        data.distance = toPoi.magnitude;
+
+        // Dot remapped to 0-1 where 1 is straight ahead, 0 is ≥90 degrees off
+        float angle = Vector3.Angle(mainCam.transform.forward, toPoi);
+        data.dotProduct = 1f - Mathf.Clamp01(angle / 90f);
+
+        // --- Visibility test --------------------------------------------------
         bool isVisible = CheckUnoccluded();
 
         if (isVisible != lastVisible)
@@ -31,6 +42,7 @@ public class POIOcclusionChecker : MonoBehaviour
             data.SetVisible(isVisible);
             lastVisible = isVisible;
         }
+
     }
 
     bool CheckUnoccluded()
@@ -75,7 +87,7 @@ public class POIOcclusionChecker : MonoBehaviour
 
             if (Physics.Raycast(ray, out RaycastHit hit, dist + 0.05f))
             {
-                if (hit.collider.gameObject == this.gameObject)
+                if (hit.collider.transform.IsChildOf(transform))
                     return true; // This corner is visible and unoccluded
             }
         }
@@ -90,6 +102,10 @@ public class POIOcclusionChecker : MonoBehaviour
         Vector3 viewportPos = cam.WorldToViewportPoint(worldPoint);
         return viewportPos.z > 0 && viewportPos.x >= 0 && viewportPos.x <= 1 && viewportPos.y >= 0 && viewportPos.y <= 1;
     }
+
+    // For gizmo drawing
+    //private Vector3[] lastSamplePoints;
+    //private bool[] lastHits;
 
     /*
     // Draw the sample points and rays in the editor

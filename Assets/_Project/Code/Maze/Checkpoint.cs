@@ -4,5 +4,6 @@ using UnityEngine;
 
 public class Checkpoint : MonoBehaviour
 {
-    public CheckpointType CheckpointType;
+    //public CheckpointType CheckpointType;
+    public EventKind EventKind;
 }

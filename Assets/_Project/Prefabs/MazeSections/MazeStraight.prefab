@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6215179223184795625}
   - component: {fileID: 3180011644316031833}
   m_Layer: 0
-  m_Name: WaypointMarker
+  m_Name: WaypointMarkerCentre
   m_TagString: Untagged
   m_Icon: {fileID: 1206586993520771344, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97fbefceffb659a4d9296c523429cb43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CheckpointType: 1
+  EventKind: 1
 --- !u!1 &1949663628705274244
 GameObject:
   m_ObjectHideFlags: 0
@@ -182,9 +182,55 @@ Transform:
   - {fileID: 6325960912880124897}
   - {fileID: 3917523947117385767}
   - {fileID: 8850938284597363193}
+  - {fileID: 6226678872363963992}
   - {fileID: 6215179223184795625}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3995352020618073835
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6226678872363963992}
+  - component: {fileID: 595439649058935257}
+  m_Layer: 0
+  m_Name: WaypointMarkerEdge
+  m_TagString: Untagged
+  m_Icon: {fileID: 1206586993520771344, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6226678872363963992
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3995352020618073835}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: -5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3760957023535627738}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &595439649058935257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3995352020618073835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97fbefceffb659a4d9296c523429cb43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EventKind: 1
 --- !u!1 &4467806455419265457
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEditor;
 
 // Tell Unity this custom editor is for POIGroup
-[CustomEditor(typeof(POIGroup))]
+[CustomEditor(typeof(PointOfInterestGroup))]
 public class POIGroupEditor : Editor
 {
     public override void OnInspectorGUI()
@@ -10,7 +10,7 @@ public class POIGroupEditor : Editor
         // Draw all the default fields (POIPrefabs, InstantiateRandom, poiList)
         DrawDefaultInspector();
 
-        POIGroup myTarget = (POIGroup)target;
+        PointOfInterestGroup myTarget = (PointOfInterestGroup)target;
 
         GUILayout.Space(10);
         GUI.backgroundColor = Color.cyan;
