@@ -1,8 +1,10 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using TMPro;
+using System.Text;
 
 
 /// <summary>
@@ -37,6 +39,7 @@ public struct POISnapshot
 {
     public int id;
     public string type;         // "RED", "GREEN", "YELLOW", "TEXT"
+    public string label;        // The TMP Text or label as string
     public Vector3 position;    // full 3-D pos for reference
     public float distance;
     public float dotProduct;
@@ -87,6 +90,9 @@ public class TelemetryManager : MonoBehaviour
 
     public static TelemetryManager Instance { get; private set; }
 
+    [Header("Optional UI read-out")]
+    [SerializeField] private TextMeshProUGUI _packetReadout;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -134,7 +140,7 @@ public class TelemetryManager : MonoBehaviour
             Debug.LogError("TelemetryManager: Poster missing or does not implement IRowPoster");
     }
 
-    // ---- Public API (called by CheckpointManager, AttentionLogger, �) -------
+    // ---- Public API (called by CheckpointManager, AttentionLogger, …) -------
 
     public void Publish(EventKind kind)
     {
@@ -154,12 +160,31 @@ public class TelemetryManager : MonoBehaviour
             packet.visiblePOIs.Add(poi);
         }
 
+        /* ── DEBUG: list them in the Console when the user presses Space ───── */
+#if UNITY_EDITOR      // keep build output clean
+        if (kind == EventKind.Spacebar)
+        {
+            if (packet.visiblePOIs.Count == 0)
+            {
+                Debug.Log("[Spacebar] No POIs are visible.");
+            }
+            else
+            {
+                string list = string.Join(", ",
+                               packet.visiblePOIs.Select(p => $"{p.id}:{p.label}"));
+                Debug.Log($"[Spacebar] Visible POIs ({packet.visiblePOIs.Count}): {list}");
+            }
+        }
+#endif
 
         // 2. Flatten to wide-row CSV.
         string csvRow = FlattenToCsv(packet);
 
+        if (kind == EventKind.Spacebar && _packetReadout != null)
+            _packetReadout.text = BuildPrettyText(packet);
+
         // 3. Ship it off to the transport
-        _rowPoster.PostRow(csvRow);
+        //_rowPoster.PostRow(csvRow);
     }
 
     // Convenience wrappers for callers that prefer semantic names.
@@ -206,6 +231,37 @@ public class TelemetryManager : MonoBehaviour
         }
 
         return string.Join(",", cols);
+    }
+
+    private static string BuildPrettyText(DataPacket p)
+    {
+        var sb = new StringBuilder(256);
+
+        // headline
+        sb.AppendLine($"<b>{p.eventKind}</b>   <size=80%>{p.userSnapshot.time:F2}s</size>");
+        sb.AppendLine($"Pos  <b>{p.userSnapshot.posX:F1}</b>, <b>{p.userSnapshot.posZ:F1}</b>   " +
+                      $"Yaw  <b>{p.userSnapshot.rotY:F0}°</b>");
+        sb.AppendLine();        // blank line
+
+        // POIs
+        if (p.visiblePOIs.Count == 0)
+        {
+            sb.AppendLine("<i>No POIs in view</i>");
+        }
+        else
+        {
+            sb.AppendLine($"Visible POIs <b>{p.visiblePOIs.Count}</b>:");
+            foreach (var poi in p.visiblePOIs)
+            {
+                sb.AppendLine($"  <b>{poi.id,2}</b> " +                          // id padded to 2
+                              $"{poi.label,-10} " +                              // label up to 10 chars
+                              $"[{poi.type}]  " +
+                              $"d={poi.distance:F1}m  " +
+                              $"dot={poi.dotProduct:F2}");
+            }
+        }
+
+        return sb.ToString();
     }
 
 }

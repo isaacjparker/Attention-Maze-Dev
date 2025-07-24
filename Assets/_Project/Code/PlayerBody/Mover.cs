@@ -72,7 +72,7 @@ public class Mover : MonoBehaviour
         // Do nothing until within check distance
         if (distanceToNextCheckpoint >= checkpointRadius) return;
 
-        Debug.Log("Checkpoint within radius");
+        //Debug.Log("Checkpoint within radius");
 
         // If this is the last checkpoint, stop moving
         if (nextCheckpointIndex == checkpointManager.Checkpoints.Count - 1)
@@ -88,7 +88,7 @@ public class Mover : MonoBehaviour
             checkpointManager.ActivateCheckpoint(nextCheckpointIndex);
             // Move to the next checkpoint
             nextCheckpointIndex++;
-            Debug.Log("Checkpoint index incremented");
+            //Debug.Log("Checkpoint index incremented");
         }
     }
 

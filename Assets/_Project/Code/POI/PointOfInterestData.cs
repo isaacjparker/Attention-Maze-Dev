@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +24,7 @@ public class PointOfInterestData : MonoBehaviour
     [HideInInspector] public float distance;    // metres to camera
     [HideInInspector] public float dotProduct;  // 1 = dead-centre, 0 = 90° off-axis
 
+    [NonSerialized] public string labelText = "";
 
     // ----------------------------------------------------------------
     // Called by PointOfInterestOcclusionChecker whenever visibility
@@ -38,5 +40,12 @@ public class PointOfInterestData : MonoBehaviour
         { 
             PointOfInterestManager.Instance?.RemoveVisiblePOI(this);
         }
+    }
+
+    private void Start()
+    {
+        if (colourType != PointOfInterestColourType.TEXT)
+            labelText = colourType.ToString();
+
     }
 }

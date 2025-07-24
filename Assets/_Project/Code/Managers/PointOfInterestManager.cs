@@ -36,6 +36,8 @@ public class PointOfInterestManager : MonoBehaviour, IPointOfInterestProvider
         DontDestroyOnLoad(this.gameObject);
 
         ParseCsv();
+
+        
     }
 
 
@@ -57,7 +59,7 @@ public class PointOfInterestManager : MonoBehaviour, IPointOfInterestProvider
     // --------------------------------------------------------------------- 
 
     private void Start()
-    { 
+    {
         AssignAllIDs();
         AssignTextFromCsv();
     }
@@ -144,9 +146,17 @@ public class PointOfInterestManager : MonoBehaviour, IPointOfInterestProvider
             // find the TMP_Text in its children
             var label = poiData.GetComponentInChildren<TMP_Text>();
             if (label != null)
-                label.text = _csvWords[i];
+            {
+                string labelString = _csvWords[i];
+                label.text = labelString;
+                label.ForceMeshUpdate();
+                poiData.labelText = labelString;
+            }
             else
+            {
                 Debug.LogWarning($"POI id={poiData.id} has no TMP_Text to assign.");
+            }
+                
         }
     }
 
@@ -205,6 +215,7 @@ public class PointOfInterestManager : MonoBehaviour, IPointOfInterestProvider
             {
                 id = poi.id,
                 type = poi.colourType.ToString(),
+                label = poi.labelText,
                 position = poi.transform.position,
                 distance = poi.distance,                // pre-calculated in checker
                 dotProduct = poi.dotProduct             // pre-calculated in checker

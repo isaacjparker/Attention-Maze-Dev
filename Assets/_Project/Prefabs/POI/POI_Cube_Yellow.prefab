@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 7265840593974593437}
   - component: {fileID: 2490378802296854588}
   - component: {fileID: 5477100155312631210}
-  - component: {fileID: 7883406969901644338}
   m_Layer: 0
   m_Name: POI_Cube_Yellow
   m_TagString: Untagged
@@ -121,15 +120,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 0
   colourType: 1
---- !u!114 &7883406969901644338
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6645284609191623909}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 615891345a89a39459348fa3035797c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  distance: 0
+  dotProduct: 0

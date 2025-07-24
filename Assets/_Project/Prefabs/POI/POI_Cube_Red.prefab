@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 5747531811860439677}
   - component: {fileID: 2894070309038286368}
   - component: {fileID: 2397950113780929795}
-  - component: {fileID: 3971250543678878326}
   m_Layer: 0
   m_Name: POI_Cube_Red
   m_TagString: Untagged
@@ -121,15 +120,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 0
   colourType: 0
---- !u!114 &3971250543678878326
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3479311811217292344}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 615891345a89a39459348fa3035797c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  distance: 0
+  dotProduct: 0
