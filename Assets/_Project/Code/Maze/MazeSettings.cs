@@ -12,10 +12,13 @@ public enum WallTokens
 [CreateAssetMenu(menuName = "Maze/Settings/New Settings")]
 public class MazeSettings : ScriptableObject
 {
-    public string TemplateName;
-    public bool ControlMovement;
-    public bool ControlView;
-    public bool SpacebarToSignifyActivity;
+    public string ConfigName;
+    public bool ManualLocomotion;
+    public bool ManualLook;
+    public bool ManualLogging;
+    public bool AutoLogging;
+    public float AutoLoggingIntervalSec;
+    public string Version;
     public WallTokens WallTokens;
 
 }

@@ -53,13 +53,13 @@ public class Mover : MonoBehaviour
         if (canMove == false) return;
 
         // Move if the experiment is set to manual move and participant is pressing W
-        if (settings.ControlMovement == true && Input.GetKey(KeyCode.W))
+        if (settings.ManualLocomotion == true && Input.GetKey(KeyCode.W))
         {
             MoveAlongCheckpoints();
         }
 
         // Move automatically if manual move is off
-        if (settings.ControlMovement == false)
+        if (settings.ManualLocomotion == false)
         {
             MoveAlongCheckpoints();
         }

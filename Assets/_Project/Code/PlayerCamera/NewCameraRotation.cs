@@ -67,7 +67,7 @@ public class NewCameraRotation : MonoBehaviour
     {
         float input = 0f;
 
-        if (settings.ControlView)
+        if (settings.ManualLook)
         {
             // Get input from A and D keys
             input = Input.GetAxis("Horizontal"); // -1 for A, 1 for D
