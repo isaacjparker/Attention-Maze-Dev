@@ -12,8 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4864bc857a4c8ab42ab8de62ec822a72, type: 3}
   m_Name: Experiment1
   m_EditorClassIdentifier: 
-  TemplateName: Experiment1
-  ControlMovement: 1
-  ControlView: 1
-  SpacebarToSignifyActivity: 0
+  ConfigName: defaults
+  Version: 1
+  AutoLogging: 0
+  AutoLoggingIntervalSec: 0
+  ManualLocomotion: 1
+  LocomotionSpeed: 5
+  ManualLook: 1
+  LookSpeed: 1
+  ManualLogging: 1
+  ShowStartDialogueScreen: 0
+  StartDialogueText: 
+  StartDialogueAlignment: 3
+  ShowStartButton: 0
+  AutoStartTimer: 0
+  ShowEndDialogueScreen: 0
+  EndDialogueText: 
+  EndDialogueAlignment: 3
+  ShowExitButton: 0
+  AutoExitTimer: 0
+  ShowLinkButton: 0
+  LinkButtonURL: 
   WallTokens: 0

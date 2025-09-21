@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class ConfigService : MonoBehaviour
@@ -93,12 +94,114 @@ public class ConfigService : MonoBehaviour
     private void ResolveOnce()
     { 
         // 1) Start merged KeyaValues with defaults
-        Dictionary<string, string> marged = new Dictionary<string, string>(fallbackSnapshot);
+        Dictionary<string, string> merged = new Dictionary<string, string>(fallbackSnapshot);
 
         // 2) Overlay CSV
         string csvName = "";
-        //if (csvPreset)
+        if (csvPreset != null && !string.IsNullOrWhiteSpace(csvPreset.text))
+        {
+            csvName = csvPreset.name + ".csv";
+            try
+            {
+                foreach ((string k, string v) in ParseCsvKeyValue(csvPreset.text))
+                {
+                    if (string.IsNullOrWhiteSpace(k)) continue;
+                    merged[k] = v;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.Log($"[ConfigService] CSV parse failed; using defaults. {e.Message} ");
+            }
+        }
 
+        // 3) Coerce + validate (case-insensitive keys assumed)
+        string configName = GetOr(merged, "config_name", fallbackSnapshot["config_name"]);
+        string version = GetOr(merged, "version", fallbackSnapshot["version"]);
+
+        bool autoLog = CoerceBool(GetOr(merged, "auto_logging", fallbackSnapshot["auto_logging"]), defaultsSO.AutoLogging);
+        float autoInt = CoerceFloat(GetOr(merged, "auto_logging_interval_sec", fallbackSnapshot["auto_logging_interval_sec"]), defaultsSO.AutoLoggingIntervalSec);
+        if (autoInt < 0.1f) autoInt = 0.1f;
+
+        bool manualLoc = CoerceBool(GetOr(merged, "manual_locomotion", fallbackSnapshot["manual_locomotion"]), defaultsSO.ManualLocomotion);
+        float locomotion = CoerceFloat(GetOr(merged, "locomotion_speed", fallbackSnapshot["locomotion_speed"]), defaultsSO.LocomotionSpeed);
+
+        bool manualLook = CoerceBool(GetOr(merged, "manual_look", fallbackSnapshot["manual_look"]), defaultsSO.ManualLook);
+        float lookSpeed = CoerceFloat(GetOr(merged, "look_speed", fallbackSnapshot["look_speed"]), defaultsSO.LookSpeed);
+
+        bool manualLog = CoerceBool(GetOr(merged, "manual_logging", fallbackSnapshot["manual_logging"]), defaultsSO.ManualLogging);
+
+        bool showStart = CoerceBool(GetOr(merged, "show_start_dialogue_screen", fallbackSnapshot["show_start_dialogue_screen"]), defaultsSO.ShowStartDialogueScreen);
+        string startText = CoerceString(GetOr(merged, "start_dialogue_text", fallbackSnapshot["start_dialogue_text"]));
+        var startAlign = CoerceEnum(GetOr(merged, "start_dialogue_alignment", fallbackSnapshot["start_dialogue_alignment"]), defaultsSO.StartDialogueAlignment);
+
+        bool showStartBtn = CoerceBool(GetOr(merged, "show_start_button", fallbackSnapshot["show_start_button"]), defaultsSO.ShowStartButton);
+        float autoStart = CoerceFloat(GetOr(merged, "auto_start_timer", fallbackSnapshot["auto_start_timer"]), defaultsSO.AutoStartTimer);
+
+        bool showEnd = CoerceBool(GetOr(merged, "show_end_dialogue_screen", fallbackSnapshot["show_end_dialogue_screen"]), defaultsSO.ShowEndDialogueScreen);
+        string endText = CoerceString(GetOr(merged, "end_dialogue_text", fallbackSnapshot["end_dialogue_text"]));
+        var endAlign = CoerceEnum(GetOr(merged, "end_dialogue_alignment", fallbackSnapshot["end_dialogue_alignment"]), defaultsSO.EndDialogueAlignment);
+
+        bool showExitBtn = CoerceBool(GetOr(merged, "show_exit_button", fallbackSnapshot["show_exit_button"]), defaultsSO.ShowExitButton);
+        float autoExit = CoerceFloat(GetOr(merged, "auto_exit_timer", fallbackSnapshot["auto_exit_timer"]), defaultsSO.AutoExitTimer);
+
+        bool showLinkBtn = CoerceBool(GetOr(merged, "show_link_button", fallbackSnapshot["show_link_button"]), defaultsSO.ShowLinkButton);
+        string linkUrl = CoerceString(GetOr(merged, "link_button_url", fallbackSnapshot["link_button_url"]));
+
+        // 4) Freeze snapshot (stringified for easy logging)
+        Dictionary<string, string> snap = new Dictionary<string, string>
+        {
+            ["config_name"] = configName,
+            ["version"] = version,
+            ["auto_logging"] = autoLog ? "true" : "false",
+            ["auto_logging_interval_sec"] = autoInt.ToString("0.###", CultureInfo.InvariantCulture),
+            ["manual_locomotion"] = manualLoc ? "true" : "false",
+            ["locomotion_speed"] = locomotion.ToString("0.###", CultureInfo.InvariantCulture),
+            ["manual_look"] = manualLook ? "true" : "false",
+            ["look_speed"] = lookSpeed.ToString("0.###", CultureInfo.InvariantCulture),
+            ["manual_logging"] = manualLog ? "true" : "false",
+            ["show_start_dialogue_screen"] = showStart ? "true" : "false",
+            ["start_dialogue_text"] = startText,
+            ["start_dialogue_alignment"] = startAlign.ToString().ToUpperInvariant(),
+            ["show_start_button"] = showStartBtn ? "true" : "false",
+            ["auto_start_timer"] = autoStart.ToString("0.###", CultureInfo.InvariantCulture),
+            ["show_end_dialogue_screen"] = showEnd ? "true" : "false",
+            ["end_dialogue_text"] = endText,
+            ["end_dialogue_alignment"] = endAlign.ToString().ToUpperInvariant(),
+            ["show_exit_button"] = showExitBtn ? "true" : "false",
+            ["auto_exit_timer"] = autoExit.ToString("0.###", CultureInfo.InvariantCulture),
+            ["show_link_button"] = showLinkBtn ? "true" : "false",
+            ["link_button_url"] = linkUrl
+        };
+
+        current = new ConfigData(
+            configName,
+            version,
+            autoLog,
+            autoInt,
+            manualLoc,
+            locomotion,
+            manualLook,
+            lookSpeed,
+            manualLog,
+            showStart,
+            startText,
+            startAlign,
+            showStartBtn,
+            autoStart,
+            showEnd,
+            endText,
+            endAlign,
+            showExitBtn,
+            autoExit,
+            showLinkBtn,
+            linkUrl,
+            csvName,
+            snap
+        );
+
+        IsResolved = true;
+        OnResolved?.Invoke();
     }
 
     // ----- Helpers -----
