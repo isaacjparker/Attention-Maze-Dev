@@ -5,10 +5,10 @@ using UnityEngine.Events;
 
 public class Mover : MonoBehaviour
 {
-    public MazeSettings settings;
+    //public MazeSettings settings;
     public CheckpointManager checkpointManager;
-    public float speed = 5f;           // Movement speed
-    public float rotationSpeed = 5f;   // Rotation speed
+    //public float speed = 5f;           // Movement speed
+    //public float rotationSpeed = 5f;   // Rotation speed
     public float checkpointRadius = 0.5f;  // Distance to checkpoint before rotating towards the next one
     //public float checkpointTriggerDistance = 0.3f;
 
@@ -16,12 +16,27 @@ public class Mover : MonoBehaviour
     private int nextCheckpointIndex = 0;    // Next checkpoint index
     private float distanceToNextCheckpoint;
     private CharacterController controller;  // Reference to the CharacterController
-    private bool canMove = true;      // Flag to control when to stop moving
+    //private bool canMove = true;      // Flag to control when to stop moving
+
+    // Local caches from ConfigService
+    private bool canMove = true;
+    private float speed = 5f;
+    private float rotationSpeed = 5f;
 
     private void OnEnable()
     {
         // If Maze is reset at runtime, checkpoint index must also be reset
         nextCheckpointIndex = 0;
+
+        if (Director.Instance != null && Director.Instance.IsReady)
+        {
+            ApplyConfig();
+        }
+        else if (Director.Instance != null)
+        {
+            Director.Instance.ApplyConfig += ApplyConfig;
+        }
+
         canMove = true;
     }
 
@@ -44,6 +59,12 @@ public class Mover : MonoBehaviour
 
     void Update()
     {
+        if (checkpointManager == null)
+            Debug.Log("Checkpoint Manager is null");
+
+        if (checkpointManager.Checkpoints == null)
+            Debug.Log("Null checkpoints in Checkpoint Manager");
+
         // Get the next checkpoint from index
         nextCheckpoint = checkpointManager.Checkpoints[nextCheckpointIndex];
 
@@ -53,13 +74,13 @@ public class Mover : MonoBehaviour
         if (canMove == false) return;
 
         // Move if the experiment is set to manual move and participant is pressing W
-        if (settings.ManualLocomotion == true && Input.GetKey(KeyCode.W))
+        if (ConfigService.Instance != null && ConfigService.Instance.ManualLocomotion == true && Input.GetKey(KeyCode.W))
         {
             MoveAlongCheckpoints();
         }
 
         // Move automatically if manual move is off
-        if (settings.ManualLocomotion == false)
+        if (ConfigService.Instance != null && ConfigService.Instance.ManualLocomotion == false)
         {
             MoveAlongCheckpoints();
         }
@@ -71,8 +92,6 @@ public class Mover : MonoBehaviour
 
         // Do nothing until within check distance
         if (distanceToNextCheckpoint >= checkpointRadius) return;
-
-        //Debug.Log("Checkpoint within radius");
 
         // If this is the last checkpoint, stop moving
         if (nextCheckpointIndex == checkpointManager.Checkpoints.Count - 1)
@@ -88,7 +107,6 @@ public class Mover : MonoBehaviour
             checkpointManager.ActivateCheckpoint(nextCheckpointIndex);
             // Move to the next checkpoint
             nextCheckpointIndex++;
-            //Debug.Log("Checkpoint index incremented");
         }
     }
 
@@ -107,7 +125,7 @@ public class Mover : MonoBehaviour
     }
 
     private float DistanceToPosition(Vector3 origin, Vector3 target)
-    { 
+    {
         return Vector3.Distance(origin, target);
     }
 
@@ -127,7 +145,19 @@ public class Mover : MonoBehaviour
     }
 
     private Checkpoint GetNextCheckpoint(int checkpointIndex)
-    { 
+    {
         return checkpointManager.Checkpoints[Mathf.Min(checkpointIndex + 1, checkpointManager.Checkpoints.Count - 1)];
+    }
+
+    // Central place to copy values from ConfigService
+    private void ApplyConfig()
+    {
+        // Unsubscribe if we were waiting
+        if (Director.Instance != null)
+            Director.Instance.ApplyConfig -= ApplyConfig;
+
+        // Cache required variables
+        speed = ConfigService.Instance != null ? ConfigService.Instance.LocomotionSpeed : speed;
+        rotationSpeed = ConfigService.Instance != null ? ConfigService.Instance.LookSpeed : rotationSpeed;
     }
 }

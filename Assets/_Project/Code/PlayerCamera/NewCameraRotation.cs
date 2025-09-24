@@ -2,14 +2,35 @@ using UnityEngine;
 
 public class NewCameraRotation : MonoBehaviour
 {
-    public MazeSettings settings;
+    //public MazeSettings settings;
     public Transform player;  // Reference to the player object
-    public Vector3 positionOffset = Vector3.zero; // Offset from the player position
-    public float rotationSpeed = 100f;  // Speed at which the camera rotates
     public float returnSpeed = 2f;
     public float maxRotationAngle = 45f;  // Maximum rotation in degrees
 
+    private Vector3 positionOffset = Vector3.zero; // Offset from the player position
     private float currentRotation = 0f;  // Tracks the camera's current local rotation relative to the player
+
+    private bool manualLookEnabled = true;
+    private float rotationSpeed = 100f;
+
+    private void OnEnable()
+    {
+        // Pull config now or subscribe if not yet ready
+        if (Director.Instance != null && Director.Instance.IsReady)
+        {
+            ApplyConfig();
+        }
+        else if (Director.Instance != null)
+        {
+            Director.Instance.ApplyConfig += ApplyConfig;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+            Director.Instance.ApplyConfig -= ApplyConfig;
+    }
 
     void Start()
     {
@@ -28,46 +49,11 @@ public class NewCameraRotation : MonoBehaviour
         transform.position = player.position + Quaternion.Euler(0f, player.eulerAngles.y, 0f) * positionOffset;
     }
 
-    /*
-    void RotateCamera()
-    {
-
-        float input = 0f;
-
-        // Only allow input if manually controlling view
-        if (settings.ControlView == true)
-        {
-            // Get input from the A and D keys
-            input = Input.GetAxis("Horizontal"); // -1 for A, 1 for D
-        }
-
-        float rotationAmount = input * rotationSpeed * Time.deltaTime;
-
-        // Adjust the current rotation based on user input
-        currentRotation += rotationAmount;
-
-        // Clamp the current rotation
-        currentRotation = Mathf.Clamp(currentRotation, -maxRotationAngle, maxRotationAngle);
-
-        // Smoothly adjust the currentRotation back towards zero if no input
-        if (Mathf.Approximately(input, 0f))
-        {
-            currentRotation = Mathf.MoveTowards(currentRotation, 0f, returnSpeed * Time.deltaTime);
-        }
-
-        // Calculate the target rotation
-        Quaternion targetRotation = Quaternion.Euler(0f, player.eulerAngles.y + currentRotation, 0f);
-
-        // Apply the rotation to the camera
-        transform.rotation = targetRotation;
-    }
-    */
-
     void RotateCamera()
     {
         float input = 0f;
 
-        if (settings.ManualLook)
+        if (manualLookEnabled)
         {
             // Get input from A and D keys
             input = Input.GetAxis("Horizontal"); // -1 for A, 1 for D
@@ -91,5 +77,14 @@ public class NewCameraRotation : MonoBehaviour
         // Always rotate the camera to the body's heading + head yaw offset
         Quaternion targetRotation = Quaternion.Euler(0f, player.eulerAngles.y + currentRotation, 0f);
         transform.rotation = targetRotation;
+    }
+
+    private void ApplyConfig()
+    {
+        if (Director.Instance != null)
+            Director.Instance.ApplyConfig -= ApplyConfig;
+
+        manualLookEnabled = (ConfigService.Instance != null) ? ConfigService.Instance.ManualLook : manualLookEnabled;
+        rotationSpeed = (ConfigService.Instance != null) ? ConfigService.Instance.LookSpeed : rotationSpeed;
     }
 }
