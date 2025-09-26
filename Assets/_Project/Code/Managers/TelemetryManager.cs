@@ -121,6 +121,14 @@ public class TelemetryManager : MonoBehaviour
 
     private const int MaxVisiblePOIs = 4;              // flattening cap
 
+    // Phase and config data
+
+    private bool _isRunning = false;
+
+    private string _configName = "";
+    private string _configVersion = "";
+    private IReadOnlyDictionary<string, string> _configSnapshot = null;
+
     private void OnEnable()
     {
         // Cache interface references once for performance & null-checks.
@@ -138,6 +146,42 @@ public class TelemetryManager : MonoBehaviour
 
         if (_rowPoster == null)
             Debug.LogError("TelemetryManager: Poster missing or does not implement IRowPoster");
+
+        // Subscribe to Director phases
+        if (Director.Instance != null && Director.Instance.IsSetupReady)
+        {
+            OnApplicationSetup();
+        }
+        else if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup += OnApplicationSetup;
+        }
+
+        if (Director.Instance != null && Director.Instance.IsRunReady)
+        {
+            OnApplicationRun();
+        }
+        else if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationRun += OnApplicationRun;
+        }
+
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationEnd += OnApplicationEnd;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup -= OnApplicationSetup;
+            Director.Instance.OnApplicationRun -= OnApplicationRun;
+            Director.Instance.OnApplicationEnd -= OnApplicationEnd;
+        }
+
+        _isRunning = false;
     }
 
     // ---- Public API (called by CheckpointManager, AttentionLogger, …) -------
@@ -146,6 +190,10 @@ public class TelemetryManager : MonoBehaviour
     {
         if (_userProvider == null || _poiProvider == null || _rowPoster == null)
             return; // avoid NRE spam if dependencies are broken
+
+        // NOTE: We're not gating publish by _isRunning here,
+        // because some callers (e.g., Start/End markers) may want to emit outside
+        // the running loop. If you later want to gate, add: if (!_isRunning) return;
 
         DataPacket packet = new DataPacket
         {
@@ -190,6 +238,43 @@ public class TelemetryManager : MonoBehaviour
     // Convenience wrappers for callers that prefer semantic names.
     public void PublishCheckpoint(EventKind checkpointType) => Publish(checkpointType);
     public void PublishSpaceBar() => Publish(EventKind.Spacebar);
+
+    // ---- Director phase handlers --------------------------------------
+
+    private void OnApplicationSetup()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationSetup -= OnApplicationSetup;
+
+        // Capture config metadata
+        if (ConfigService.Instance != null)
+        { 
+            _configName = ConfigService.Instance.ConfigName;
+            _configVersion = ConfigService.Instance.Version;
+            _configSnapshot = ConfigService.Instance.Snapshot;
+        }
+
+        // If you want to print a header in _packetReadout:
+        // if (_packetReadout != null)
+        //     _packetReadout.text = $"<b>{_configName}</b>  <size=80%>v{_configVersion}</size>";
+    }
+
+    private void OnApplicationRun()
+    { 
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationRun -= OnApplicationRun;
+
+        _isRunning = true;
+    }
+
+    private void OnApplicationEnd()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationEnd -= OnApplicationEnd;
+
+        _isRunning = false;
+    }
+
 
     // ---- Private helpers ----------------------------------------------------
 

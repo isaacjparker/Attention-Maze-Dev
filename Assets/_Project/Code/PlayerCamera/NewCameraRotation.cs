@@ -13,39 +13,63 @@ public class NewCameraRotation : MonoBehaviour
     private bool manualLookEnabled = true;
     private float rotationSpeed = 100f;
 
+    // Runtime gate from Director (don’t read input until Running)
+    private bool isRunning = false;
+
     private void OnEnable()
     {
         // Pull config now or subscribe if not yet ready
-        if (Director.Instance != null && Director.Instance.IsReady)
+        if (Director.Instance != null && Director.Instance.IsSetupReady)
         {
             ApplyConfig();
         }
         else if (Director.Instance != null)
         {
-            Director.Instance.ApplyConfig += ApplyConfig;
+            Director.Instance.OnApplicationSetup += ApplyConfig;
+        }
+
+        if (Director.Instance != null && Director.Instance.IsRunReady)
+        {
+            BeginRun();
+        }
+        else if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationRun += BeginRun;
+        }
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationEnd += EndRun;
         }
     }
 
     private void OnDisable()
     {
         if (Director.Instance != null)
-            Director.Instance.ApplyConfig -= ApplyConfig;
+        {
+            Director.Instance.OnApplicationSetup -= ApplyConfig;
+            Director.Instance.OnApplicationRun -= BeginRun;
+            Director.Instance.OnApplicationEnd -= EndRun;
+        }
+            
     }
 
     void Start()
     {
         // Initialize the offset
-        positionOffset = transform.position - player.position;
+        if (player != null)
+            positionOffset = transform.position - player.position;
     }
 
     void Update()
     {
+        if (!isRunning) return;
         RotateCamera();
     }
 
     void LateUpdate()
     {
-        // Update the camera's position based on the player's position and offset
+        // Keep following the body even outside Running (safe & visually stable)
+        if (player == null) return;
         transform.position = player.position + Quaternion.Euler(0f, player.eulerAngles.y, 0f) * positionOffset;
     }
 
@@ -82,9 +106,28 @@ public class NewCameraRotation : MonoBehaviour
     private void ApplyConfig()
     {
         if (Director.Instance != null)
-            Director.Instance.ApplyConfig -= ApplyConfig;
+            Director.Instance.OnApplicationSetup -= ApplyConfig;
+
+        if (ConfigService.Instance == null)
+            return;
 
         manualLookEnabled = (ConfigService.Instance != null) ? ConfigService.Instance.ManualLook : manualLookEnabled;
         rotationSpeed = (ConfigService.Instance != null) ? ConfigService.Instance.LookSpeed : rotationSpeed;
+    }
+
+    private void BeginRun()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationRun -= BeginRun;
+
+        isRunning = true;
+    }
+
+    private void EndRun()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationEnd -= EndRun;
+
+        isRunning = false;
     }
 }

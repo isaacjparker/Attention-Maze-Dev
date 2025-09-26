@@ -200,6 +200,8 @@ public class ConfigService : MonoBehaviour
             snap
         );
 
+        Debug.Log("Loco: " + ManualLocomotion + " Look: " + ManualLook + " Log: " + ManualLogging);
+
         IsResolved = true;
         OnResolved?.Invoke();
     }

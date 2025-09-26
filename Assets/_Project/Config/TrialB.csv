@@ -2,11 +2,11 @@ key,value,type,notes
 config_name,Trial A,string,Trial name
 version,2025-09-21T11:30Z,,ISO datetime
 auto_logging,FALSE,bool,Whether auto logging runs
-auto_logging_interval_sec,1.00,float,Minimum 0.1; ignored if auto_logging=false
+auto_logging_interval_sec,1,float,Minimum 0.1; ignored if auto_logging=false
 manual_locomotion,TRUE,bool,Enable keyboard movement. Auto move if false
-locomotion_speed,1.00,float,Speed of movement
+locomotion_speed,5,float,Speed of movement
 manual_look,TRUE,bool,Enable keyboard look
-look_speed,1.00,float,Camera turn speed
+look_speed,5,float,Camera turn speed
 manual_logging,TRUE,bool,Space-bar logs attention
 show_start_dialogue_screen,TRUE,bool,Show dialogue screen at maze start
 start_dialogue_text,"Welcome to the experiment.

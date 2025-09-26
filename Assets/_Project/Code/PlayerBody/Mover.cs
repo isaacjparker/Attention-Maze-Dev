@@ -22,22 +22,50 @@ public class Mover : MonoBehaviour
     private bool canMove = true;
     private float speed = 5f;
     private float rotationSpeed = 5f;
+    private bool manualLocomotionEnabled = true;
+
+    // Runtime gate from Director
+    private bool isRunning = false;
 
     private void OnEnable()
     {
         // If Maze is reset at runtime, checkpoint index must also be reset
         nextCheckpointIndex = 0;
 
-        if (Director.Instance != null && Director.Instance.IsReady)
+        if (Director.Instance != null && Director.Instance.IsSetupReady)
         {
             ApplyConfig();
         }
         else if (Director.Instance != null)
         {
-            Director.Instance.ApplyConfig += ApplyConfig;
+            Director.Instance.OnApplicationSetup += ApplyConfig;
+        }
+
+        if (Director.Instance != null && Director.Instance.IsRunReady)
+        {
+            BeginRun();
+        }
+        else if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationRun += BeginRun;
+        }
+
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationEnd += EndRun;
         }
 
         canMove = true;
+    }
+
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup -= ApplyConfig;
+            Director.Instance.OnApplicationRun -= BeginRun;
+            Director.Instance.OnApplicationEnd -= EndRun;
+        }
     }
 
     void Start()
@@ -59,6 +87,9 @@ public class Mover : MonoBehaviour
 
     void Update()
     {
+        // Do nothing until Director says we're running
+        if (!isRunning) return;
+
         if (checkpointManager == null)
             Debug.Log("Checkpoint Manager is null");
 
@@ -73,14 +104,12 @@ public class Mover : MonoBehaviour
         // Only move is movement is enabled
         if (canMove == false) return;
 
-        // Move if the experiment is set to manual move and participant is pressing W
-        if (ConfigService.Instance != null && ConfigService.Instance.ManualLocomotion == true && Input.GetKey(KeyCode.W))
+        // Manual or auto move based on config
+        if (manualLocomotionEnabled == true && Input.GetKey(KeyCode.W))
         {
             MoveAlongCheckpoints();
         }
-
-        // Move automatically if manual move is off
-        if (ConfigService.Instance != null && ConfigService.Instance.ManualLocomotion == false)
+        else if (manualLocomotionEnabled == false)
         {
             MoveAlongCheckpoints();
         }
@@ -149,15 +178,37 @@ public class Mover : MonoBehaviour
         return checkpointManager.Checkpoints[Mathf.Min(checkpointIndex + 1, checkpointManager.Checkpoints.Count - 1)];
     }
 
+    // ---- Phase hooks ----
+
     // Central place to copy values from ConfigService
     private void ApplyConfig()
     {
         // Unsubscribe if we were waiting
         if (Director.Instance != null)
-            Director.Instance.ApplyConfig -= ApplyConfig;
+            Director.Instance.OnApplicationSetup -= ApplyConfig;
+
+        if (ConfigService.Instance == null)
+            return;
 
         // Cache required variables
         speed = ConfigService.Instance != null ? ConfigService.Instance.LocomotionSpeed : speed;
         rotationSpeed = ConfigService.Instance != null ? ConfigService.Instance.LookSpeed : rotationSpeed;
+        manualLocomotionEnabled = ConfigService.Instance.ManualLocomotion;
+    }
+
+    private void BeginRun()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationRun -= BeginRun;
+
+        isRunning = true;
+    }
+
+    private void EndRun()
+    { 
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationEnd -= EndRun;
+
+        isRunning = false;
     }
 }
