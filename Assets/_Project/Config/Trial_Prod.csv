@@ -1,0 +1,26 @@
+key,value,type,notes
+config_name,Trial A,string,Trial name
+version,2025-09-21T11:30Z,,ISO datetime
+auto_logging,FALSE,bool,Whether auto logging runs
+auto_logging_interval_sec,1,float,Minimum 0.1; ignored if auto_logging=false
+manual_locomotion,TRUE,bool,Enable keyboard movement. Auto move if false
+locomotion_speed,5,float,Speed of movement
+manual_look,TRUE,bool,Enable keyboard look
+look_speed,5,float,Camera turn speed
+manual_logging,TRUE,bool,Space-bar logs attention
+show_start_dialogue_screen,TRUE,bool,Show dialogue screen at maze start
+start_dialogue_text,"Welcome to the experiment.
+Press W to move forward.
+Press A or D to look left and right.
+Press Spacebar if something catches your attention.",string,Text shown to participant in start dialogue screen.
+start_dialogue_alignment,JUSTIFY,DialogueAlignment,"Alignment of dialogue text. LEFT, CENTER, RIGHT, JUSTIFY."
+show_start_button,TRUE,bool,Show the start button in the start dialogue screen.
+auto_start_timer,-1,float,Time until auto start maze. Timer disabled if set to -1.
+show_end_dialogue_screen,TRUE,bool,Show dialogue screen at maze end
+end_dialogue_text,"Thank you for taking part in this experiment.
+Click exit to leave the app.",string,Text shown to participant in end dialogue screen.
+end_dialogue_alignment,JUSTIFY,DialogueAlignment,"Alignment of dialogue text. LEFT, CENTER, RIGHT, JUSTIFY."
+show_exit_button,TRUE,bool,Show the exit button in the end dialogue screen
+auto_exit_timer,-1,float,Time until auto exit at maze end. Timer disabled if set to -1.
+show_link_button,FALSE,bool,Show a button in the end dialogue screen to link participant to a URL.
+link_button_url,NULL,string,"Target URL for link button. If NULL or empty, button will not be shown."

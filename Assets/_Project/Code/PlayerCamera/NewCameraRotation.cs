@@ -18,6 +18,22 @@ public class NewCameraRotation : MonoBehaviour
 
     private void OnEnable()
     {
+        
+    }
+
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup -= ApplyConfig;
+            Director.Instance.OnApplicationRun -= BeginRun;
+            Director.Instance.OnApplicationEnd -= EndRun;
+        }
+            
+    }
+
+    void Start()
+    {
         // Pull config now or subscribe if not yet ready
         if (Director.Instance != null && Director.Instance.IsSetupReady)
         {
@@ -40,21 +56,7 @@ public class NewCameraRotation : MonoBehaviour
         {
             Director.Instance.OnApplicationEnd += EndRun;
         }
-    }
 
-    private void OnDisable()
-    {
-        if (Director.Instance != null)
-        {
-            Director.Instance.OnApplicationSetup -= ApplyConfig;
-            Director.Instance.OnApplicationRun -= BeginRun;
-            Director.Instance.OnApplicationEnd -= EndRun;
-        }
-            
-    }
-
-    void Start()
-    {
         // Initialize the offset
         if (player != null)
             positionOffset = transform.position - player.position;
@@ -63,6 +65,7 @@ public class NewCameraRotation : MonoBehaviour
     void Update()
     {
         if (!isRunning) return;
+        if (!manualLookEnabled) return;
         RotateCamera();
     }
 
@@ -71,8 +74,29 @@ public class NewCameraRotation : MonoBehaviour
         // Keep following the body even outside Running (safe & visually stable)
         if (player == null) return;
         transform.position = player.position + Quaternion.Euler(0f, player.eulerAngles.y, 0f) * positionOffset;
+
+        // Guide camera view around corners
+        // Rotation: body heading + clamped yaw offset
+        transform.rotation = Quaternion.Euler(0f, player.eulerAngles.y + currentRotation, 0f);
     }
 
+    void RotateCamera()
+    {
+        float input = Input.GetAxis("Horizontal");
+        if (Mathf.Abs(input) > 0.0001f)
+        {
+            // Manual yaw offset in deg/sec
+            float delta = input * rotationSpeed * Time.deltaTime;
+            currentRotation = Mathf.Clamp(currentRotation + delta, -maxRotationAngle, maxRotationAngle);
+        }
+        else if (returnSpeed > 0f)
+        {
+            // Optional recenter (deg/sec)
+            //currentRotation = Mathf.MoveTowards(currentRotation, 0f, returnSpeed * Time.deltaTime);
+        }
+    }
+
+    /*
     void RotateCamera()
     {
         float input = 0f;
@@ -102,6 +126,7 @@ public class NewCameraRotation : MonoBehaviour
         Quaternion targetRotation = Quaternion.Euler(0f, player.eulerAngles.y + currentRotation, 0f);
         transform.rotation = targetRotation;
     }
+    */
 
     private void ApplyConfig()
     {
@@ -111,8 +136,8 @@ public class NewCameraRotation : MonoBehaviour
         if (ConfigService.Instance == null)
             return;
 
-        manualLookEnabled = (ConfigService.Instance != null) ? ConfigService.Instance.ManualLook : manualLookEnabled;
-        rotationSpeed = (ConfigService.Instance != null) ? ConfigService.Instance.LookSpeed : rotationSpeed;
+        manualLookEnabled = ConfigService.Instance.ManualLook;
+        rotationSpeed = ConfigService.Instance.LookSpeed;
     }
 
     private void BeginRun()

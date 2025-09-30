@@ -21,6 +21,30 @@ public class AttentionLogger : MonoBehaviour
 
     private void OnEnable()
     {
+        
+    }
+
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup -= ApplyConfig;
+            Director.Instance.OnApplicationRun -= BeginRun;
+            Director.Instance.OnApplicationEnd -= EndRun;
+        }
+            
+
+        if (autoLogRoutine != null)
+        {
+            StopCoroutine(autoLogRoutine);
+            autoLogRoutine = null;
+        }
+
+        isRunning = false;
+    }
+
+    private void Start()
+    {
         if (Director.Instance != null && Director.Instance.IsSetupReady)
         {
             ApplyConfig();
@@ -43,25 +67,6 @@ public class AttentionLogger : MonoBehaviour
         {
             Director.Instance.OnApplicationEnd += EndRun;
         }
-    }
-
-    private void OnDisable()
-    {
-        if (Director.Instance != null)
-        {
-            Director.Instance.OnApplicationSetup -= ApplyConfig;
-            Director.Instance.OnApplicationRun -= BeginRun;
-            Director.Instance.OnApplicationEnd -= EndRun;
-        }
-            
-
-        if (autoLogRoutine != null)
-        {
-            StopCoroutine(autoLogRoutine);
-            autoLogRoutine = null;
-        }
-
-        isRunning = false;
     }
 
     // Update is called once per frame

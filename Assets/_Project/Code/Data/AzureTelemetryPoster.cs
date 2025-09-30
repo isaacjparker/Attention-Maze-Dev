@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 /// it to the research server. TelemtryManager handles batching,
 /// throttling, and formatting, so this class stays small.
 /// </summary>
-public class MyWebGLPoster : MonoBehaviour, IRowPoster
+public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
 {
     [Tooltip("Absolute URL of the endpoint that accepts a CSV row payload.")]
     [SerializeField]

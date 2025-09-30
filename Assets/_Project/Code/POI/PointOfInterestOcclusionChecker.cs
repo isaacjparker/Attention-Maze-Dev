@@ -31,7 +31,7 @@ public class PointOfInterestOcclusionChecker : MonoBehaviour
         poiText = data.GetComponentInChildren<TMP_Text>();
         mainCam = Camera.main;
 
-        Debug.Log($"A {name}: colour={data.colourType} poiText={(poiText != null)} poiCol={(poiCol != null)}");
+        //Debug.Log($"A {name}: colour={data.colourType} poiText={(poiText != null)} poiCol={(poiCol != null)}");
 
         if (data.colourType == PointOfInterestColourType.TEXT && poiText != null)
             CacheTextCorners();                    // build once

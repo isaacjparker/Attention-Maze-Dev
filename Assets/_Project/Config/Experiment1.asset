@@ -19,7 +19,7 @@ MonoBehaviour:
   ManualLocomotion: 1
   LocomotionSpeed: 5
   ManualLook: 1
-  LookSpeed: 1
+  LookSpeed: 50
   ManualLogging: 1
   ShowStartDialogueScreen: 0
   StartDialogueText: 

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,21 +7,17 @@ public class Mover : MonoBehaviour
 {
     //public MazeSettings settings;
     public CheckpointManager checkpointManager;
-    //public float speed = 5f;           // Movement speed
-    //public float rotationSpeed = 5f;   // Rotation speed
     public float checkpointRadius = 0.5f;  // Distance to checkpoint before rotating towards the next one
-    //public float checkpointTriggerDistance = 0.3f;
 
     private Checkpoint nextCheckpoint;
     private int nextCheckpointIndex = 0;    // Next checkpoint index
     private float distanceToNextCheckpoint;
     private CharacterController controller;  // Reference to the CharacterController
-    //private bool canMove = true;      // Flag to control when to stop moving
 
     // Local caches from ConfigService
     private bool canMove = true;
     private float speed = 5f;
-    private float rotationSpeed = 5f;
+    [SerializeField] private float bodyRotationSpeed = 1f;
     private bool manualLocomotionEnabled = true;
 
     // Runtime gate from Director
@@ -31,6 +27,22 @@ public class Mover : MonoBehaviour
     {
         // If Maze is reset at runtime, checkpoint index must also be reset
         nextCheckpointIndex = 0;
+
+        canMove = true;
+    }
+
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup -= ApplyConfig;
+            Director.Instance.OnApplicationRun -= BeginRun;
+            Director.Instance.OnApplicationEnd -= EndRun;
+        }
+    }
+
+    void Start()
+    {
 
         if (Director.Instance != null && Director.Instance.IsSetupReady)
         {
@@ -55,21 +67,6 @@ public class Mover : MonoBehaviour
             Director.Instance.OnApplicationEnd += EndRun;
         }
 
-        canMove = true;
-    }
-
-    private void OnDisable()
-    {
-        if (Director.Instance != null)
-        {
-            Director.Instance.OnApplicationSetup -= ApplyConfig;
-            Director.Instance.OnApplicationRun -= BeginRun;
-            Director.Instance.OnApplicationEnd -= EndRun;
-        }
-    }
-
-    void Start()
-    {
         controller = GetComponent<CharacterController>();
 
         if (checkpointManager == null)
@@ -169,8 +166,13 @@ public class Mover : MonoBehaviour
         // Create the target rotation based on that direction
         Quaternion targetRotation = Quaternion.LookRotation(directionToNextCheckpoint);
 
+        // lambda ≈ 6–10 for “snappy but smooth”
+        float lambda = 1f;
+        float t = 1f - Mathf.Exp(-lambda * Time.deltaTime); // exact per-frame factor
+
         // Smoothly rotate the character towards the next checkpoint
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, bodyRotationSpeed * t);
+
     }
 
     private Checkpoint GetNextCheckpoint(int checkpointIndex)
@@ -183,6 +185,7 @@ public class Mover : MonoBehaviour
     // Central place to copy values from ConfigService
     private void ApplyConfig()
     {
+
         // Unsubscribe if we were waiting
         if (Director.Instance != null)
             Director.Instance.OnApplicationSetup -= ApplyConfig;
@@ -192,7 +195,7 @@ public class Mover : MonoBehaviour
 
         // Cache required variables
         speed = ConfigService.Instance != null ? ConfigService.Instance.LocomotionSpeed : speed;
-        rotationSpeed = ConfigService.Instance != null ? ConfigService.Instance.LookSpeed : rotationSpeed;
+        //rotationSpeed = ConfigService.Instance != null ? ConfigService.Instance.LookSpeed : rotationSpeed;
         manualLocomotionEnabled = ConfigService.Instance.ManualLocomotion;
     }
 

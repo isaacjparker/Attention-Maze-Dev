@@ -113,7 +113,7 @@ public class TelemetryManager : MonoBehaviour
     [SerializeField] private PointOfInterestManager _poiProviderSource;
 
     [Tooltip("WebGLPoster (or other transport) that receives CSV rows")]
-    [SerializeField] private MyWebGLPoster _posterSource;
+    [SerializeField] private AzureTelemetryPoster _posterSource;
 
     private IUserStateProvider _userProvider;
     private IPointOfInterestProvider _poiProvider;
@@ -147,6 +147,23 @@ public class TelemetryManager : MonoBehaviour
         if (_rowPoster == null)
             Debug.LogError("TelemetryManager: Poster missing or does not implement IRowPoster");
 
+        
+    }
+
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup -= OnApplicationSetup;
+            Director.Instance.OnApplicationRun -= OnApplicationRun;
+            Director.Instance.OnApplicationEnd -= OnApplicationEnd;
+        }
+
+        _isRunning = false;
+    }
+
+    private void Start()
+    {
         // Subscribe to Director phases
         if (Director.Instance != null && Director.Instance.IsSetupReady)
         {
@@ -170,18 +187,6 @@ public class TelemetryManager : MonoBehaviour
         {
             Director.Instance.OnApplicationEnd += OnApplicationEnd;
         }
-    }
-
-    private void OnDisable()
-    {
-        if (Director.Instance != null)
-        {
-            Director.Instance.OnApplicationSetup -= OnApplicationSetup;
-            Director.Instance.OnApplicationRun -= OnApplicationRun;
-            Director.Instance.OnApplicationEnd -= OnApplicationEnd;
-        }
-
-        _isRunning = false;
     }
 
     // ---- Public API (called by CheckpointManager, AttentionLogger, …) -------

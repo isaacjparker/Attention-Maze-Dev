@@ -6,6 +6,8 @@ using System.Text;
 using Unity.VisualScripting;
 using UnityEngine;
 
+public enum ConfigSource { Defaults, Csv}
+
 public class ConfigService : MonoBehaviour
 {
     public static ConfigService Instance { get; private set; }
@@ -15,6 +17,9 @@ public class ConfigService : MonoBehaviour
     [SerializeField] private MazeSettings defaultsSO;
     [Tooltip("Local CSV preset e.g. TrialA.csv")]
     [SerializeField] private TextAsset csvPreset;
+    [Header("Debug / Testing")]
+    [SerializeField] private bool forceDefaults = false; // Inspector toggle
+    public ConfigSource ResolvedFrom { get; private set; } // Queryable at runtime
 
     public bool IsResolved { get; private set; }
     public event Action OnResolved;
@@ -96,6 +101,7 @@ public class ConfigService : MonoBehaviour
         // 1) Start merged KeyaValues with defaults
         Dictionary<string, string> merged = new Dictionary<string, string>(fallbackSnapshot);
 
+        /*
         // 2) Overlay CSV
         string csvName = "";
         if (csvPreset != null && !string.IsNullOrWhiteSpace(csvPreset.text))
@@ -113,6 +119,33 @@ public class ConfigService : MonoBehaviour
             {
                 Debug.Log($"[ConfigService] CSV parse failed; using defaults. {e.Message} ");
             }
+        }
+        */
+
+        // 2) Overlay CSV (unless forced defaults)
+        string csvName = "";
+        if (!forceDefaults && csvPreset != null && !string.IsNullOrWhiteSpace(csvPreset.text))
+        {
+            csvName = csvPreset.name + ".csv";
+            try
+            {
+                foreach ((string k, string v) in ParseCsvKeyValue(csvPreset.text))
+                {
+                    if (string.IsNullOrWhiteSpace(k)) continue;
+                    merged[k] = v;
+                }
+                ResolvedFrom = ConfigSource.Csv;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[ConfigService] CSV parse failed; falling back to defaults. {e.Message}");
+                ResolvedFrom = ConfigSource.Defaults;
+                csvName = ""; // make it explicit we didn't use CSV
+            }
+        }
+        else
+        {
+            ResolvedFrom = ConfigSource.Defaults;
         }
 
         // 3) Coerce + validate (case-insensitive keys assumed)
@@ -200,7 +233,12 @@ public class ConfigService : MonoBehaviour
             snap
         );
 
-        Debug.Log("Loco: " + ManualLocomotion + " Look: " + ManualLook + " Log: " + ManualLogging);
+        Debug.Log(
+            $"[ConfigService] Resolved from: {ResolvedFrom} " +
+            (ResolvedFrom == ConfigSource.Csv ? $"(csv='{csvName}')" : "(defaultsSO)") +
+            $". ManualLocomotion={ManualLocomotion}, ManualLook={ManualLook}, ManualLogging={ManualLogging}"
+            );
+
 
         IsResolved = true;
         OnResolved?.Invoke();
