@@ -148,7 +148,7 @@ public class AttentionLogger : MonoBehaviour
 
         while (true)
         {
-            TelemetryManager.Instance?.PublishSpaceBar();
+            TelemetryManager.Instance?.PublishAutomatic();
 
             yield return wait;
         }

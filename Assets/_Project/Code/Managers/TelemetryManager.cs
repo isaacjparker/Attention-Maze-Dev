@@ -12,10 +12,7 @@ using System.Text;
 /// </summary>
 public enum EventKind
 { 
-    Start,
-    Straight,
-    Corner,
-    End,
+    Automatic,
     Spacebar        // User pressed the space-bar
 }
 
@@ -237,12 +234,14 @@ public class TelemetryManager : MonoBehaviour
             _packetReadout.text = BuildPrettyText(packet);
 
         // 3. Ship it off to the transport
-        //_rowPoster.PostRow(csvRow);
+        _rowPoster.PostRow(csvRow);
     }
 
     // Convenience wrappers for callers that prefer semantic names.
-    public void PublishCheckpoint(EventKind checkpointType) => Publish(checkpointType);
+    //public void PublishCheckpoint(EventKind checkpointType) => Publish(checkpointType);
     public void PublishSpaceBar() => Publish(EventKind.Spacebar);
+    public void PublishAutomatic() => Publish(EventKind.Automatic);
+    public void PublishCheckpoint() => Publish(EventKind.Spacebar); // Do not use
 
     // ---- Director phase handlers --------------------------------------
 

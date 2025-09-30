@@ -130,7 +130,7 @@ public class Mover : MonoBehaviour
         // Otherwise, increment index to begin rotating towards the next checkpoint
         if (nextCheckpointIndex < checkpointManager.Checkpoints.Count - 1)
         {
-            checkpointManager.ActivateCheckpoint(nextCheckpointIndex);
+            //checkpointManager.ActivateCheckpoint(nextCheckpointIndex);
             // Move to the next checkpoint
             nextCheckpointIndex++;
         }

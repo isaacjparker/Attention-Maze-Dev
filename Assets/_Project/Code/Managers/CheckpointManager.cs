@@ -71,7 +71,7 @@ public class CheckpointManager : MonoBehaviour
         EventKind kind = checkpoint.EventKind;
 
         // 1) Fire Telemtry
-        TelemetryManager.Instance?.PublishCheckpoint(kind);
+        TelemetryManager.Instance?.PublishCheckpoint();
 
 
     }

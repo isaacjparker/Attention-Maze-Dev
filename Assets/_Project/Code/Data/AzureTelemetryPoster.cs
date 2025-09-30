@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Text;
 using UnityEngine;
@@ -13,17 +13,27 @@ using UnityEngine.Networking;
 public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
 {
     [Tooltip("Absolute URL of the endpoint that accepts a CSV row payload.")]
-    [SerializeField]
     private string _endpoint =
-        "https://my-small-research-server.onrender.com/submit-data";
+        "https://func-attention-maze-fubda4b0ezbqa5ed.uksouth-01.azurewebsites.net/api/submit";
+
+    //"https://my-small-research-server.onrender.com/submit-data"
+
+    // Session id generated once per app run
+    private string _sessionId;
 
     /// <summary>
     /// Optional callback: UI elements can subscribe to show success/error.
     /// </summary>
     public event Action<string> OnPostResult;
 
+    private void Awake()
+    {
+        _sessionId = Guid.NewGuid().ToString();
+        _endpoint = (_endpoint ?? "").Trim(); // <- important for WebGL & Editor
+    }
+
     // ---------------------------------------------------------------------
-    // IRowPoster implementation � called by TelemetryManager
+    // IRowPoster implementation — called by TelemetryManager
     // ---------------------------------------------------------------------
     public void PostRow(string csvRow)
     {
@@ -38,9 +48,10 @@ public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
     // ---------------------------------------------------------------------
     private IEnumerator PostCsvRow(string row)
     {
+        Debug.Log("Posting Row");
         // For simplicity we wrap the CSV line in a JSON object:
         // { "row": "EventKind,Time,PosX,..." }
-        string jsonPayload = $"{{\"row\":\"{EscapeForJson(row)}\"}}";
+        string jsonPayload = $"{{\"session_id\":\"{_sessionId}\",\"row\":\"{EscapeForJson(row)}\"}}";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonPayload);
 
         using UnityWebRequest request =
@@ -51,8 +62,13 @@ public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
             };
 
         request.SetRequestHeader("Content-Type", "application/json");
+        request.SetRequestHeader("Accept", "application/json");
+        request.timeout = 10;
 
+        Debug.Log($"POST → {_endpoint}  bytes:{bodyRaw.Length}");
         yield return request.SendWebRequest();
+        Debug.Log($"← {(long)request.responseCode} {request.error}  Body: {request.downloadHandler.text}");
+
 
         if (request.result is UnityWebRequest.Result.ConnectionError
             or UnityWebRequest.Result.ProtocolError)
