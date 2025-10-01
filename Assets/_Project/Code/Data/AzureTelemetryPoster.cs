@@ -169,7 +169,7 @@ public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
     private IEnumerator WarmUpServer(string healthURL)
     {
         using var req = UnityWebRequest.Get(healthURL);
-        req.timeout = 5;
+        req.timeout = 12;
         yield return req.SendWebRequest();
         Debug.Log($"Warm-up → {(long)req.responseCode} {(req.error ?? "ok")}");
     }
