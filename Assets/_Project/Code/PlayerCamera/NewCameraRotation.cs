@@ -13,6 +13,10 @@ public class NewCameraRotation : MonoBehaviour
     private bool manualLookEnabled = true;
     private float rotationSpeed = 100f;
 
+    private bool returnToCenter = false;
+    private KeyCode keyLookLeft = KeyCode.A;
+    private KeyCode keyLookRight = KeyCode.D;
+
     // Runtime gate from Director (don’t read input until Running)
     private bool isRunning = false;
 
@@ -83,50 +87,25 @@ public class NewCameraRotation : MonoBehaviour
     void RotateCamera()
     {
         float input = Input.GetAxis("Horizontal");
+
+        if (Mathf.Abs(input) < 0.0001f)
+        {
+            if (keyLookLeft != KeyCode.None && Input.GetKey(keyLookLeft)) input -= 1f;
+            if (keyLookRight != KeyCode.None && Input.GetKey(keyLookRight)) input += 1f;
+        }
+
         if (Mathf.Abs(input) > 0.0001f)
         {
             // Manual yaw offset in deg/sec
             float delta = input * rotationSpeed * Time.deltaTime;
             currentRotation = Mathf.Clamp(currentRotation + delta, -maxRotationAngle, maxRotationAngle);
         }
-        else if (returnSpeed > 0f)
+        else if (returnToCenter && returnSpeed > 0f)
         {
-            // Optional recenter (deg/sec)
-            //currentRotation = Mathf.MoveTowards(currentRotation, 0f, returnSpeed * Time.deltaTime);
+            // Recenter toward 0 at returnSpeed deg/sec
+            currentRotation = Mathf.MoveTowards(currentRotation, 0f, returnSpeed * Time.deltaTime);
         }
     }
-
-    /*
-    void RotateCamera()
-    {
-        float input = 0f;
-
-        if (manualLookEnabled)
-        {
-            // Get input from A and D keys
-            input = Input.GetAxis("Horizontal"); // -1 for A, 1 for D
-        }
-
-        // Only adjust the head rotation with input
-
-        if (!Mathf.Approximately(input, 0f))
-        {
-            float rotationAmount = input * rotationSpeed * Time.deltaTime;
-            currentRotation += rotationAmount;
-            currentRotation = Mathf.Clamp(currentRotation, -maxRotationAngle, maxRotationAngle);
-        }
-        // OPTIONAL: If you want to auto-center the head, use this block.
-        // Otherwise, comment it out if you want the head to stay wherever the player last looked.
-        else
-        {
-            //currentRotation = Mathf.MoveTowards(currentRotation, 0f, returnSpeed * Time.deltaTime);
-        }
-
-        // Always rotate the camera to the body's heading + head yaw offset
-        Quaternion targetRotation = Quaternion.Euler(0f, player.eulerAngles.y + currentRotation, 0f);
-        transform.rotation = targetRotation;
-    }
-    */
 
     private void ApplyConfig()
     {
@@ -138,6 +117,12 @@ public class NewCameraRotation : MonoBehaviour
 
         manualLookEnabled = ConfigService.Instance.ManualLook;
         rotationSpeed = ConfigService.Instance.LookSpeed;
+
+        maxRotationAngle = ConfigService.Instance.MaxViewAngle;       // clamp to ±max
+        returnToCenter = ConfigService.Instance.ReturnViewToCenter; // enable/disable recenter
+        returnSpeed = ConfigService.Instance.ReturnViewSpeed;    // deg/sec toward center
+        keyLookLeft = ConfigService.Instance.KeyLookLeft;
+        keyLookRight = ConfigService.Instance.KeyLookRight;
     }
 
     private void BeginRun()

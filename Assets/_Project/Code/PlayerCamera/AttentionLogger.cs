@@ -14,15 +14,12 @@ public class AttentionLogger : MonoBehaviour
     private bool autoLoggingEnabled = false;
     private float autoLoggingInterval = 1f;
 
+    private KeyCode keyAttention = KeyCode.Space;
+
     private bool isRunning = false;
 
     // Coroutine handle so we can stop/restart cleanly
     private Coroutine autoLogRoutine = null;
-
-    private void OnEnable()
-    {
-        
-    }
 
     private void OnDisable()
     {
@@ -72,12 +69,11 @@ public class AttentionLogger : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!isRunning || !manualLoggingEnabled)
-            return;
+        if (!isRunning || !manualLoggingEnabled) return;
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        var k = (keyAttention != KeyCode.None) ? keyAttention : KeyCode.Space;
+        if (Input.GetKeyDown(k))
         {
-            // Fire the telemtry event.
             TelemetryManager.Instance?.PublishSpaceBar();
         }
     }
@@ -93,6 +89,8 @@ public class AttentionLogger : MonoBehaviour
         manualLoggingEnabled = (ConfigService.Instance != null) ? ConfigService.Instance.ManualLogging : manualLoggingEnabled;
         autoLoggingEnabled = (ConfigService.Instance != null) ? ConfigService.Instance.AutoLogging : autoLoggingEnabled;
         autoLoggingInterval = (ConfigService.Instance != null) ? ConfigService.Instance.AutoLoggingIntervalSec : autoLoggingInterval;
+
+        keyAttention = ConfigService.Instance.KeyAttention;
 
         if (isRunning)
         {

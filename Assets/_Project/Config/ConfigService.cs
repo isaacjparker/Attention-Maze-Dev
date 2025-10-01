@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -17,24 +18,46 @@ public class ConfigService : MonoBehaviour
     [SerializeField] private MazeSettings defaultsSO;
     [Tooltip("Local CSV preset e.g. TrialA.csv")]
     [SerializeField] private TextAsset csvPreset;
+
     [Header("Debug / Testing")]
     [SerializeField] private bool forceDefaults = false; // Inspector toggle
-    public ConfigSource ResolvedFrom { get; private set; } // Queryable at runtime
 
+    public ConfigSource ResolvedFrom { get; private set; } // Queryable at runtime
     public bool IsResolved { get; private set; }
     public event Action OnResolved;
 
     // Public read-only properties
-    // Maze Settings
+    // Identity
     public string ConfigName => current?.ConfigName ?? defaultsSO.ConfigName;
-    public string Version => current?.Version ?? "";
+    public string Version => current?.Version ?? defaultsSO.Version;
+
+    // Looging
     public bool AutoLogging => current?.AutoLogging ?? defaultsSO.AutoLogging;
     public float AutoLoggingIntervalSec => current?.AutoLoggingIntervalSec ?? defaultsSO.AutoLoggingIntervalSec;
+    public bool ManualLogging => current?.ManualLogging ?? defaultsSO.ManualLogging;
+
+    // Movement / Look
     public bool ManualLocomotion => current?.ManualLocomotion ?? defaultsSO.ManualLocomotion;
     public float LocomotionSpeed => current?.LocomotionSpeed ?? defaultsSO.LocomotionSpeed;
     public bool ManualLook => current?.ManualLook ?? defaultsSO.ManualLook;
     public float LookSpeed => current?.LookSpeed ?? defaultsSO.LookSpeed;
-    public bool ManualLogging => current?.ManualLogging ?? defaultsSO.ManualLogging;
+    public float MaxViewAngle => current?.MaxViewAngle ?? defaultsSO.MaxViewAngle;
+    public float CornerTurnSpeed => current?.CornerTurnSpeed ?? defaultsSO.CornerTurnSpeed;
+    public bool ReturnViewToCenter => current?.ReturnViewToCenter ?? defaultsSO.ReturnViewToCenter;
+    public float ReturnViewSpeed => current?.ReturnViewSpeed ?? defaultsSO.ReturnViewSpeed;
+
+    // Keybinds
+    public KeyCode KeyForward => current?.KeyForward ?? ParseKeyCode(defaultsSO.KeyForward);
+    public KeyCode KeyLookLeft => current?.KeyLookLeft ?? ParseKeyCode(defaultsSO.KeyLookLeft);
+    public KeyCode KeyLookRight => current?.KeyLookRight ?? ParseKeyCode(defaultsSO.KeyLookRight);
+    public KeyCode KeyAttention => current?.KeyAttention ?? ParseKeyCode(defaultsSO.KeyAttention);
+
+    // POIs
+    public IReadOnlyList<string> PoiTextList => current?.PoiTextList ?? ParsePoiList(defaultsSO.PoiTextList);
+
+    // Networking
+    public string ServerURL => current?.ServerURL ?? defaultsSO.ServerURL;
+    public string WarmupURL => current?.WarmupURL ?? defaultsSO.WarmupURL;
 
     // Start Dialogue Screen Settings
     public bool ShowStartDialogueScreen => current?.ShowStartDialogueScreen ?? defaultsSO.ShowStartDialogueScreen;
@@ -54,6 +77,7 @@ public class ConfigService : MonoBehaviour
     public bool ShowLinkButton => current?.ShowLinkButton ?? defaultsSO.ShowLinkButton;
     public string LinkButtonURL => current?.LinkButtonURL ?? defaultsSO.LinkButtonURL;
     
+    // Provenance
     public string SourceCsvName => current?.SourceCsvName ?? "";
     public IReadOnlyDictionary<string, string> Snapshot => current?.Snapshot ?? fallbackSnapshot;
 
@@ -72,18 +96,41 @@ public class ConfigService : MonoBehaviour
         {
             ["config_name"] = NullSafe(defaultsSO.ConfigName),
             ["version"] = NullSafe(defaultsSO.Version),
+
+            // logging
             ["auto_logging"] = defaultsSO.AutoLogging ? "true" : "false",
             ["auto_logging_interval_sec"] = defaultsSO.AutoLoggingIntervalSec.ToString("0.###", CultureInfo.InvariantCulture),
+            ["manual_logging"] = defaultsSO.ManualLogging ? "true" : "false",
+
+            // movement / look
             ["manual_locomotion"] = defaultsSO.ManualLocomotion ? "true" : "false",
             ["locomotion_speed"] = defaultsSO.LocomotionSpeed.ToString("0.###", CultureInfo.InvariantCulture),
             ["manual_look"] = defaultsSO.ManualLook ? "true" : "false",
             ["look_speed"] = defaultsSO.LookSpeed.ToString("0.###", CultureInfo.InvariantCulture),
-            ["manual_logging"] = defaultsSO.ManualLogging ? "true" : "false",
+            ["max_view_angle"] = defaultsSO.MaxViewAngle.ToString("0.###", CultureInfo.InvariantCulture),
+            ["corner_turn_speed"] = defaultsSO.CornerTurnSpeed.ToString("0.###", CultureInfo.InvariantCulture),
+            ["return_view_to_center"] = defaultsSO.ReturnViewToCenter ? "true" : "false",
+            ["return_view_speed"] = defaultsSO.ReturnViewSpeed.ToString("0.###", CultureInfo.InvariantCulture),
+
+            // keybinds (store as strings in defaults)
+            ["key_forward"] = NullSafe(defaultsSO.KeyForward),
+            ["key_look_left"] = NullSafe(defaultsSO.KeyLookLeft),
+            ["key_look_right"] = NullSafe(defaultsSO.KeyLookRight),
+            ["key_attention"] = NullSafe(defaultsSO.KeyAttention),
+
+            // POIs + networking
+            ["poi_text_list"] = NullSafe(defaultsSO.PoiTextList),
+            ["server_url"] = NullSafe(defaultsSO.ServerURL),
+            ["warmup_url"] = NullSafe(defaultsSO.WarmupURL),
+
+            // start dialogue
             ["show_start_dialogue_screen"] = defaultsSO.ShowStartDialogueScreen ? "true" : "false",
             ["start_dialogue_text"] = NullSafe(defaultsSO.StartDialogueText),
             ["start_dialogue_alignment"] = defaultsSO.StartDialogueAlignment.ToString().ToUpperInvariant(),
             ["show_start_button"] = defaultsSO.ShowStartButton ? "true" : "false",
             ["auto_start_timer"] = defaultsSO.AutoStartTimer.ToString("0.###", CultureInfo.InvariantCulture),
+           
+            // end dialogue
             ["show_end_dialogue_screen"] = defaultsSO.ShowEndDialogueScreen ? "true" : "false",
             ["end_dialogue_text"] = NullSafe(defaultsSO.EndDialogueText),
             ["end_dialogue_alignment"] = defaultsSO.EndDialogueAlignment.ToString().ToUpperInvariant(),
@@ -101,28 +148,7 @@ public class ConfigService : MonoBehaviour
         // 1) Start merged KeyaValues with defaults
         Dictionary<string, string> merged = new Dictionary<string, string>(fallbackSnapshot);
 
-        /*
-        // 2) Overlay CSV
-        string csvName = "";
-        if (csvPreset != null && !string.IsNullOrWhiteSpace(csvPreset.text))
-        {
-            csvName = csvPreset.name + ".csv";
-            try
-            {
-                foreach ((string k, string v) in ParseCsvKeyValue(csvPreset.text))
-                {
-                    if (string.IsNullOrWhiteSpace(k)) continue;
-                    merged[k] = v;
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Log($"[ConfigService] CSV parse failed; using defaults. {e.Message} ");
-            }
-        }
-        */
-
-        // 2) Overlay CSV (unless forced defaults)
+        // 2) Overlay CSV unless forcing defaults
         string csvName = "";
         if (!forceDefaults && csvPreset != null && !string.IsNullOrWhiteSpace(csvPreset.text))
         {
@@ -131,8 +157,7 @@ public class ConfigService : MonoBehaviour
             {
                 foreach ((string k, string v) in ParseCsvKeyValue(csvPreset.text))
                 {
-                    if (string.IsNullOrWhiteSpace(k)) continue;
-                    merged[k] = v;
+                    if (!string.IsNullOrWhiteSpace(k)) merged[k] = v;
                 }
                 ResolvedFrom = ConfigSource.Csv;
             }
@@ -140,7 +165,7 @@ public class ConfigService : MonoBehaviour
             {
                 Debug.LogWarning($"[ConfigService] CSV parse failed; falling back to defaults. {e.Message}");
                 ResolvedFrom = ConfigSource.Defaults;
-                csvName = ""; // make it explicit we didn't use CSV
+                csvName = "";
             }
         }
         else
@@ -152,32 +177,49 @@ public class ConfigService : MonoBehaviour
         string configName = GetOr(merged, "config_name", fallbackSnapshot["config_name"]);
         string version = GetOr(merged, "version", fallbackSnapshot["version"]);
 
+        // logging
         bool autoLog = CoerceBool(GetOr(merged, "auto_logging", fallbackSnapshot["auto_logging"]), defaultsSO.AutoLogging);
-        float autoInt = CoerceFloat(GetOr(merged, "auto_logging_interval_sec", fallbackSnapshot["auto_logging_interval_sec"]), defaultsSO.AutoLoggingIntervalSec);
-        if (autoInt < 0.1f) autoInt = 0.1f;
-
-        bool manualLoc = CoerceBool(GetOr(merged, "manual_locomotion", fallbackSnapshot["manual_locomotion"]), defaultsSO.ManualLocomotion);
-        float locomotion = CoerceFloat(GetOr(merged, "locomotion_speed", fallbackSnapshot["locomotion_speed"]), defaultsSO.LocomotionSpeed);
-
-        bool manualLook = CoerceBool(GetOr(merged, "manual_look", fallbackSnapshot["manual_look"]), defaultsSO.ManualLook);
-        float lookSpeed = CoerceFloat(GetOr(merged, "look_speed", fallbackSnapshot["look_speed"]), defaultsSO.LookSpeed);
-
+        float autoInt = Math.Max(0.1f, CoerceFloat(GetOr(merged, "auto_logging_interval_sec", fallbackSnapshot["auto_logging_interval_sec"]), defaultsSO.AutoLoggingIntervalSec));
         bool manualLog = CoerceBool(GetOr(merged, "manual_logging", fallbackSnapshot["manual_logging"]), defaultsSO.ManualLogging);
 
+        // movement/look
+        bool manualLoc = CoerceBool(GetOr(merged, "manual_locomotion", fallbackSnapshot["manual_locomotion"]), defaultsSO.ManualLocomotion);
+        float locomotion = CoerceFloat(GetOr(merged, "locomotion_speed", fallbackSnapshot["locomotion_speed"]), defaultsSO.LocomotionSpeed);
+        bool manualLook = CoerceBool(GetOr(merged, "manual_look", fallbackSnapshot["manual_look"]), defaultsSO.ManualLook);
+        float lookSpeed = CoerceFloat(GetOr(merged, "look_speed", fallbackSnapshot["look_speed"]), defaultsSO.LookSpeed);
+        float maxViewAngle = Mathf.Max(0f, CoerceFloat(GetOr(merged, "max_view_angle", fallbackSnapshot["max_view_angle"]), defaultsSO.MaxViewAngle));
+        float cornerTurnSpeed = Mathf.Max(0f, CoerceFloat(GetOr(merged, "corner_turn_speed", fallbackSnapshot["corner_turn_speed"]), defaultsSO.CornerTurnSpeed));
+        bool returnViewToCenter = CoerceBool(GetOr(merged, "return_view_to_center", fallbackSnapshot["return_view_to_center"]), defaultsSO.ReturnViewToCenter);
+        float returnViewSpeed = Mathf.Max(0f, CoerceFloat(GetOr(merged, "return_view_speed", fallbackSnapshot["return_view_speed"]), defaultsSO.ReturnViewSpeed));
+
+        // keybinds
+        KeyCode keyForward = ParseKeyCode(GetOr(merged, "key_forward", fallbackSnapshot["key_forward"]));
+        KeyCode keyLookLeft = ParseKeyCode(GetOr(merged, "key_look_left", fallbackSnapshot["key_look_left"]));
+        KeyCode keyLookRight = ParseKeyCode(GetOr(merged, "key_look_right", fallbackSnapshot["key_look_right"]));
+        KeyCode keyAttention = ParseKeyCode(GetOr(merged, "key_attention", fallbackSnapshot["key_attention"]));
+
+        // POIs
+        var poiList = ParsePoiList(GetOr(merged, "poi_text_list", fallbackSnapshot["poi_text_list"]));
+
+        // networking
+        string serverUrl = CoerceString(GetOr(merged, "server_url", GetOrOrEmpty(fallbackSnapshot, "server_url")));
+        if (string.IsNullOrEmpty(serverUrl))
+            Debug.LogWarning("[ConfigService] server_url is empty. Telemetry post will fail until provided.");
+        string warmupUrl = CoerceString(GetOr(merged, "warmup_url", GetOrOrEmpty(fallbackSnapshot, "warmup_url"))); // optional
+
+        // start dialogue
         bool showStart = CoerceBool(GetOr(merged, "show_start_dialogue_screen", fallbackSnapshot["show_start_dialogue_screen"]), defaultsSO.ShowStartDialogueScreen);
         string startText = CoerceString(GetOr(merged, "start_dialogue_text", fallbackSnapshot["start_dialogue_text"]));
         var startAlign = CoerceEnum(GetOr(merged, "start_dialogue_alignment", fallbackSnapshot["start_dialogue_alignment"]), defaultsSO.StartDialogueAlignment);
-
         bool showStartBtn = CoerceBool(GetOr(merged, "show_start_button", fallbackSnapshot["show_start_button"]), defaultsSO.ShowStartButton);
         float autoStart = CoerceFloat(GetOr(merged, "auto_start_timer", fallbackSnapshot["auto_start_timer"]), defaultsSO.AutoStartTimer);
 
+        // end dialogue
         bool showEnd = CoerceBool(GetOr(merged, "show_end_dialogue_screen", fallbackSnapshot["show_end_dialogue_screen"]), defaultsSO.ShowEndDialogueScreen);
         string endText = CoerceString(GetOr(merged, "end_dialogue_text", fallbackSnapshot["end_dialogue_text"]));
         var endAlign = CoerceEnum(GetOr(merged, "end_dialogue_alignment", fallbackSnapshot["end_dialogue_alignment"]), defaultsSO.EndDialogueAlignment);
-
         bool showExitBtn = CoerceBool(GetOr(merged, "show_exit_button", fallbackSnapshot["show_exit_button"]), defaultsSO.ShowExitButton);
         float autoExit = CoerceFloat(GetOr(merged, "auto_exit_timer", fallbackSnapshot["auto_exit_timer"]), defaultsSO.AutoExitTimer);
-
         bool showLinkBtn = CoerceBool(GetOr(merged, "show_link_button", fallbackSnapshot["show_link_button"]), defaultsSO.ShowLinkButton);
         string linkUrl = CoerceString(GetOr(merged, "link_button_url", fallbackSnapshot["link_button_url"]));
 
@@ -186,18 +228,41 @@ public class ConfigService : MonoBehaviour
         {
             ["config_name"] = configName,
             ["version"] = version,
+
+            // logging
             ["auto_logging"] = autoLog ? "true" : "false",
             ["auto_logging_interval_sec"] = autoInt.ToString("0.###", CultureInfo.InvariantCulture),
+            ["manual_logging"] = manualLog ? "true" : "false",
+
+            // movement/look
             ["manual_locomotion"] = manualLoc ? "true" : "false",
             ["locomotion_speed"] = locomotion.ToString("0.###", CultureInfo.InvariantCulture),
             ["manual_look"] = manualLook ? "true" : "false",
             ["look_speed"] = lookSpeed.ToString("0.###", CultureInfo.InvariantCulture),
-            ["manual_logging"] = manualLog ? "true" : "false",
+            ["max_view_angle"] = maxViewAngle.ToString("0.###", CultureInfo.InvariantCulture),
+            ["corner_turn_speed"] = cornerTurnSpeed.ToString("0.###", CultureInfo.InvariantCulture),
+            ["return_view_to_center"] = returnViewToCenter ? "true" : "false",
+            ["return_view_speed"] = returnViewSpeed.ToString("0.###", CultureInfo.InvariantCulture),
+
+            // keybinds
+            ["key_forward"] = keyForward.ToString(),
+            ["key_look_left"] = keyLookLeft.ToString(),
+            ["key_look_right"] = keyLookRight.ToString(),
+            ["key_attention"] = keyAttention.ToString(),
+
+            // POIs + networking
+            ["poi_text_list"] = string.Join(",", poiList),
+            ["server_url"] = serverUrl,
+            ["warmup_url"] = warmupUrl,
+
+            // start dialogue
             ["show_start_dialogue_screen"] = showStart ? "true" : "false",
             ["start_dialogue_text"] = startText,
             ["start_dialogue_alignment"] = startAlign.ToString().ToUpperInvariant(),
             ["show_start_button"] = showStartBtn ? "true" : "false",
             ["auto_start_timer"] = autoStart.ToString("0.###", CultureInfo.InvariantCulture),
+
+            // end dialogue
             ["show_end_dialogue_screen"] = showEnd ? "true" : "false",
             ["end_dialogue_text"] = endText,
             ["end_dialogue_alignment"] = endAlign.ToString().ToUpperInvariant(),
@@ -207,38 +272,29 @@ public class ConfigService : MonoBehaviour
             ["link_button_url"] = linkUrl
         };
 
+        // 5) Construct immutable data
         current = new ConfigData(
-            configName,
-            version,
-            autoLog,
-            autoInt,
-            manualLoc,
-            locomotion,
-            manualLook,
-            lookSpeed,
-            manualLog,
-            showStart,
-            startText,
-            startAlign,
-            showStartBtn,
-            autoStart,
-            showEnd,
-            endText,
-            endAlign,
-            showExitBtn,
-            autoExit,
-            showLinkBtn,
-            linkUrl,
-            csvName,
-            snap
+            // identity
+            configName, version,
+            // logging
+            autoLog, autoInt, manualLog,
+            // movement/look
+            manualLoc, locomotion, manualLook, lookSpeed, maxViewAngle, cornerTurnSpeed, returnViewToCenter, returnViewSpeed,
+            // keybinds
+            keyForward, keyLookLeft, keyLookRight, keyAttention,
+            // POIs
+            poiList,
+            // networking
+            serverUrl, warmupUrl,
+            // start dialogue
+            showStart, startText, startAlign, showStartBtn, autoStart,
+            // end dialogue
+            showEnd, endText, endAlign, showExitBtn, autoExit, showLinkBtn, linkUrl,
+            // provenance
+            csvName, snap
         );
 
-        Debug.Log(
-            $"[ConfigService] Resolved from: {ResolvedFrom} " +
-            (ResolvedFrom == ConfigSource.Csv ? $"(csv='{csvName}')" : "(defaultsSO)") +
-            $". ManualLocomotion={ManualLocomotion}, ManualLook={ManualLook}, ManualLogging={ManualLogging}"
-            );
-
+        Debug.Log($"[ConfigService] Resolved from: {ResolvedFrom} {(ResolvedFrom == ConfigSource.Csv ? $"(csv='{csvName}')" : "(defaultsSO)")}");
 
         IsResolved = true;
         OnResolved?.Invoke();
@@ -248,6 +304,9 @@ public class ConfigService : MonoBehaviour
 
     private static string GetOr(Dictionary<string, string> d, string key, string fallback)
         => d.TryGetValue(key, out var v) ? v : fallback;
+
+    private static string GetOrOrEmpty(Dictionary<string, string> d, string key)
+        => d.TryGetValue(key, out var v) ? v : "";
 
     private static bool CoerceBool(string s, bool fallback)
     {
@@ -294,6 +353,63 @@ public class ConfigService : MonoBehaviour
         if (Enum.TryParse<DialogueAlignment>(s.Trim(), true, out var val))
             return val;
         return fallback;
+    }
+
+    // KeyCode parsing tolerant to "w", "space", "left", etc.
+    private static KeyCode ParseKeyCode(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return KeyCode.None;
+
+        string t = raw.Trim();
+
+        // Common aliases
+        switch (t.ToLowerInvariant())
+        {
+            case "space": return KeyCode.Space;
+            case "enter": return KeyCode.Return;
+            case "return": return KeyCode.Return;
+            case "esc":
+            case "escape": return KeyCode.Escape;
+            case "left": return KeyCode.LeftArrow;
+            case "right": return KeyCode.RightArrow;
+            case "up": return KeyCode.UpArrow;
+            case "down": return KeyCode.DownArrow;
+            default:
+                break;
+        }
+
+        // Single letters or digits (e.g., "w", "A", "3")
+        if (t.Length == 1)
+        {
+            char c = t[0];
+            if (char.IsLetter(c)) return (KeyCode)Enum.Parse(typeof(KeyCode), char.ToUpperInvariant(c).ToString());
+            if (char.IsDigit(c)) return (KeyCode)Enum.Parse(typeof(KeyCode), "Alpha" + c);
+        }
+
+        // Try direct enum parse (e.g., "LeftArrow", "RightShift")
+        if (Enum.TryParse<KeyCode>(t, true, out var parsed)) return parsed;
+
+        Debug.LogWarning($"[ConfigService] Unrecognized key code '{raw}', defaulting to None.");
+        return KeyCode.None;
+    }
+
+    // POI list: requires exactly 15 comma-separated words, trimmed; no spaces inside words.
+    private static IReadOnlyList<string> ParsePoiList(string csvList)
+    {
+        var list = (csvList ?? "")
+            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => !string.IsNullOrEmpty(s))
+            .Select(s => s.Replace(" ", "")) // enforce "no spaces" rule
+            .ToList();
+
+        if (list.Count != 15)
+        {
+            Debug.LogWarning($"[ConfigService] poi_text_list has {list.Count} entries; expected 15. Will clamp/pad to 15.");
+            if (list.Count > 15) list = list.Take(15).ToList();
+            while (list.Count < 15) list.Add("");
+        }
+        return list;
     }
 
     // Robust CSV reader that supports:

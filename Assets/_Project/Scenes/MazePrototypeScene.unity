@@ -1339,7 +1339,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e021b11f81e5c4347ae83ff06205fba6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  csvFile: {fileID: 4900000, guid: e137efac4c7aa79459528abd573ff816, type: 3}
 --- !u!4 &719798081
 Transform:
   m_ObjectHideFlags: 0
@@ -3058,7 +3057,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultsSO: {fileID: 11400000, guid: 615a4bbd4d61e0a458e3251abe9638f2, type: 2}
   csvPreset: {fileID: 4900000, guid: 9548d2911388e5f4b9a7583642834cea, type: 3}
-  forceDefaults: 1
+  forceDefaults: 0
 --- !u!4 &1344890743
 Transform:
   m_ObjectHideFlags: 0

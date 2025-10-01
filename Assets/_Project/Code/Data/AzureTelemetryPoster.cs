@@ -13,9 +13,8 @@ using UnityEngine.Networking;
 /// </summary>
 public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
 {
-    [Tooltip("Absolute URL of the endpoint that accepts a CSV row payload.")]
-    private string _endpoint =
-        "https://func-attention-maze-fubda4b0ezbqa5ed.uksouth-01.azurewebsites.net/api/submit";
+    private string _endpoint = "";   // submit URL from config
+    private string _warmupUrl = "";  // warmup/health URL from config
 
     //"https://my-small-research-server.onrender.com/submit-data"
 
@@ -35,7 +34,6 @@ public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
     private void Awake()
     {
         _sessionId = Guid.NewGuid().ToString();
-        _endpoint = (_endpoint ?? "").Trim(); // <- important for WebGL & Editor
     }
 
     public void PostRow(string csvRow)
@@ -45,9 +43,30 @@ public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
         if (!_sending) StartCoroutine(SendLoop());
     }
 
+    public void SetEndPoints(string endpoint, string warmupUrl)
+    {
+        _endpoint = (endpoint ?? "").Trim();
+        _warmupUrl = (warmupUrl ?? "").Trim();
+
+        if (string.IsNullOrEmpty(_endpoint))
+            Debug.LogWarning("[AzureTelemetryPoster] server_url is empty; will not send until provided.");
+
+        // If we already have a queue and weren't sending, kick the loop now that we’re configured
+        if (!string.IsNullOrEmpty(_endpoint) && _queue.Count > 0 && !_sending)
+            StartCoroutine(SendLoop());
+    }
+
+
     private IEnumerator SendLoop()
     { 
         _sending = true;
+
+        // If not configured yet, pause sending but keep the queue (no drops)
+        if (string.IsNullOrEmpty(_endpoint))
+        {
+            _sending = false;
+            yield break;
+        }
 
         while (_queue.Count > 0)
         {
@@ -104,63 +123,6 @@ public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
         _sending = false;
     }
 
-
-    /*
-    // ---------------------------------------------------------------------
-    // IRowPoster implementation — called by TelemetryManager
-    // ---------------------------------------------------------------------
-    public void PostRow(string csvRow)
-    {
-        if (string.IsNullOrWhiteSpace(csvRow))
-            return;
-
-        StartCoroutine(PostCsvRow(csvRow));
-    }
-
-    // ---------------------------------------------------------------------
-    // Coroutine that actually does the POST
-    // ---------------------------------------------------------------------
-    private IEnumerator PostCsvRow(string row)
-    {
-        Debug.Log("Posting Row");
-        // For simplicity we wrap the CSV line in a JSON object:
-        // { "row": "EventKind,Time,PosX,..." }
-        string jsonPayload = $"{{\"session_id\":\"{_sessionId}\",\"row\":\"{EscapeForJson(row)}\"}}";
-        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonPayload);
-
-        using UnityWebRequest request =
-            new UnityWebRequest(_endpoint, "POST")
-            {
-                uploadHandler = new UploadHandlerRaw(bodyRaw),
-                downloadHandler = new DownloadHandlerBuffer()
-            };
-
-        request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("Accept", "application/json");
-        request.timeout = 10;
-
-        Debug.Log($"POST → {_endpoint}  bytes:{bodyRaw.Length}");
-        yield return request.SendWebRequest();
-        Debug.Log($"← {(long)request.responseCode} {request.error}  Body: {request.downloadHandler.text}");
-
-
-        if (request.result is UnityWebRequest.Result.ConnectionError
-            or UnityWebRequest.Result.ProtocolError)
-        {
-            string msg = $"POST error: {request.error}";
-            Debug.Log(msg);
-            OnPostResult?.Invoke(msg);
-        }
-        else
-        { 
-            string msg = $"POST ok: {request.downloadHandler.text}";
-            Debug.Log(msg);
-            OnPostResult?.Invoke(msg);
-        }
-            
-    }
-    */
-
     // Simple JSON string escape (quotes and backslashes)
     private static string EscapeForJson(string s) =>
         s.Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -176,6 +138,10 @@ public class AzureTelemetryPoster : MonoBehaviour, IRowPoster
 
     public void TriggerWarmUpServer()
     {
-        StartCoroutine(WarmUpServer("https://func-attention-maze-fubda4b0ezbqa5ed.uksouth-01.azurewebsites.net/api/health"));
+        if (!string.IsNullOrEmpty(_warmupUrl))
+            StartCoroutine(WarmUpServer(_warmupUrl));
+        else
+            Debug.Log("[AzureTelemetryPoster] No warmup_url configured; skipping warm-up.");
     }
+
 }

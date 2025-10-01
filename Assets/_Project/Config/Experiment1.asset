@@ -16,11 +16,22 @@ MonoBehaviour:
   Version: 1
   AutoLogging: 0
   AutoLoggingIntervalSec: 0
+  ManualLogging: 1
   ManualLocomotion: 1
   LocomotionSpeed: 5
   ManualLook: 1
-  LookSpeed: 50
-  ManualLogging: 1
+  LookSpeed: 5
+  MaxViewAngle: 45
+  CornerTurnSpeed: 1
+  ReturnViewToCenter: 0
+  ReturnViewSpeed: 2
+  KeyForward: w
+  KeyLookLeft: a
+  KeyLookRight: d
+  KeyAttention: space
+  PoiTextList: sap,yard,diner,bowl,grass,key,fence,limb,rod,opera,tile,ant,wick,mat,canoe
+  ServerURL: https://func-attention-maze-fubda4b0ezbqa5ed.uksouth-01.azurewebsites.net/api/submit
+  WarmupURL: https://func-attention-maze-fubda4b0ezbqa5ed.uksouth-01.azurewebsites.net/api/health
   ShowStartDialogueScreen: 0
   StartDialogueText: 
   StartDialogueAlignment: 3

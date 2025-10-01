@@ -256,6 +256,10 @@ public class TelemetryManager : MonoBehaviour
             _configName = ConfigService.Instance.ConfigName;
             _configVersion = ConfigService.Instance.Version;
             _configSnapshot = ConfigService.Instance.Snapshot;
+
+            string serverUrl = ConfigService.Instance.ServerURL;
+            string warmupUrl = ConfigService.Instance.WarmupURL;
+            _posterSource?.SetEndPoints(serverUrl, warmupUrl);
         }
 
         // If you want to print a header in _packetReadout:

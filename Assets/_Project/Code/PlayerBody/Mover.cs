@@ -20,6 +20,8 @@ public class Mover : MonoBehaviour
     [SerializeField] private float bodyRotationSpeed = 1f;
     private bool manualLocomotionEnabled = true;
 
+    private KeyCode keyForward = KeyCode.W; // fallback
+
     // Runtime gate from Director
     private bool isRunning = false;
 
@@ -102,11 +104,14 @@ public class Mover : MonoBehaviour
         if (canMove == false) return;
 
         // Manual or auto move based on config
-        if (manualLocomotionEnabled == true && Input.GetKey(KeyCode.W))
+        if (manualLocomotionEnabled == true)
         {
-            MoveAlongCheckpoints();
+            // If keyForward ended up None, keep a safe fallback to W
+            var forwardKey = (keyForward != KeyCode.None) ? keyForward : KeyCode.W;
+            if (Input.GetKey(forwardKey))
+                MoveAlongCheckpoints();
         }
-        else if (manualLocomotionEnabled == false)
+        else
         {
             MoveAlongCheckpoints();
         }
@@ -197,6 +202,9 @@ public class Mover : MonoBehaviour
         speed = ConfigService.Instance != null ? ConfigService.Instance.LocomotionSpeed : speed;
         //rotationSpeed = ConfigService.Instance != null ? ConfigService.Instance.LookSpeed : rotationSpeed;
         manualLocomotionEnabled = ConfigService.Instance.ManualLocomotion;
+
+        keyForward = ConfigService.Instance.KeyForward;
+        bodyRotationSpeed = ConfigService.Instance.CornerTurnSpeed;
     }
 
     private void BeginRun()

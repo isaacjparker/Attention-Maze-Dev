@@ -2,12 +2,23 @@ key,value,type,notes
 config_name,Trial A,string,Trial name
 version,2025-09-21T11:30Z,,ISO datetime
 auto_logging,FALSE,bool,Whether auto logging runs
-auto_logging_interval_sec,1,float,Minimum 0.1; ignored if auto_logging=false
+auto_logging_interval_sec,1.00,float,Minimum 0.1; ignored if auto_logging=false
 manual_locomotion,TRUE,bool,Enable keyboard movement. Auto move if false
-locomotion_speed,5,float,Speed of movement
+locomotion_speed,5.00,float,Speed of movement
 manual_look,TRUE,bool,Enable keyboard look
-look_speed,5,float,Camera turn speed
+look_speed,50.00,float,Camera turn speed
+max_view_angle,45.00,float,Angle to clamp view to either side of center. Double this value for total allowed view
+corner_turn_speed,1.00,float,Speed at which camera view is guided around maze corners
+return_view_to_center,FALSE,bool,"Whether to ""drag"" view back to center over time"
+return_view_speed,2.00,float,Speed of return view to center
 manual_logging,TRUE,bool,Space-bar logs attention
+key_forward,w,string,keybind for manual locomotion
+key_look_left,a,string,keybind for looking left
+key_look_right,d,string,keybind for looking right
+key_attention,space,string,keybind for logging attention
+poi_text_list,"sap,yard,diner,bowl,grass,key,fence,limb,rod,opera,tile,ant,wick,mat,canoe",string,"List of words for point of interest. Requires 15 words, comma separated, no spaces"
+server_url,https://func-attention-maze-fubda4b0ezbqa5ed.uksouth-01.azurewebsites.net/api/submit,string,URL for server
+warmup_url,https://func-attention-maze-fubda4b0ezbqa5ed.uksouth-01.azurewebsites.net/api/health,string,(Optional) URL for a warmup GET
 show_start_dialogue_screen,TRUE,bool,Show dialogue screen at maze start
 start_dialogue_text,"Welcome to the experiment.
 Press W to move forward.

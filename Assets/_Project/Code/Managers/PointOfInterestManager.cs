@@ -13,16 +13,21 @@ using Unity.VisualScripting;  // for TMP_Text
 public class PointOfInterestManager : MonoBehaviour, IPointOfInterestProvider
 {
 
-    [Header("— CSV Data for TEXT POIs —")]
-    [Tooltip("Drop in a CSV file where each cell (or line) is one word/label.")]
-    public TextAsset csvFile;
-
     // --------------------------------------------------------------------- 
     // Singleton plumbing
     // --------------------------------------------------------------------- 
 
     public static PointOfInterestManager Instance { get; private set; }
 
+    /// <summary>
+    /// POIs currently inside the camera frsutrum (filled by PointOfInterestOcclusionChecker).
+    /// HashSet avoids duplicates and provides fast add/remove.
+    /// </summary>
+    private HashSet<PointOfInterestData> _visiblePOIs = new();
+
+    private List<string> _csvWords = new();
+
+    private int _nextId;
 
     private void Awake()
     {
@@ -35,48 +40,41 @@ public class PointOfInterestManager : MonoBehaviour, IPointOfInterestProvider
         Instance = this;
         DontDestroyOnLoad(this.gameObject);
 
-        ParseCsv();
-
-        
     }
 
-
-    /// <summary>
-    /// POIs currently inside the camera frsutrum (filled by PointOfInterestOcclusionChecker).
-    /// HashSet avoids duplicates and provides fast add/remove.
-    /// </summary>
-    private HashSet<PointOfInterestData> _visiblePOIs = new();
-
-    /// <summary>
-    /// Words extracted from the CSV, used to label TEXT-type POIs
-    /// </summary>
-    private List<string> _csvWords = new();
-
-    private int _nextId;
-
-    // --------------------------------------------------------------------- 
-    // Scene initialisation helpers (ID stamping, CSV labelling) 
-    // --------------------------------------------------------------------- 
+    private void OnDisable()
+    {
+        if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup -= OnApplicationSetup;
+            Director.Instance.OnApplicationRun -= OnApplicationRun;
+            Director.Instance.OnApplicationEnd -= OnApplicationEnd;
+        }
+    }
 
     private void Start()
     {
         AssignAllIDs();
-        AssignTextFromCsv();
-    }
+        //AssignTextFromCsv();
 
-    private void ParseCsv()
-    {
-        _csvWords.Clear();
+        // Defer text assignment until config is ready
+        if (Director.Instance != null && Director.Instance.IsSetupReady)
+        {
+            OnApplicationSetup();
+        }
+        else if (Director.Instance != null)
+        {
+            Director.Instance.OnApplicationSetup += OnApplicationSetup;
+        }
 
-        if (csvFile == null || string.IsNullOrWhiteSpace(csvFile.text))
-            return;
+        // (Run/End not strictly needed here, but wire for parity if you like)
+        if (Director.Instance != null && Director.Instance.IsRunReady)
+            OnApplicationRun();
+        else if (Director.Instance != null)
+            Director.Instance.OnApplicationRun += OnApplicationRun;
 
-        var lines = csvFile.text
-                           .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-        foreach (var line in lines)
-            _csvWords.AddRange(line.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                   .Select(s => s.Trim()));
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationEnd += OnApplicationEnd;
     }
 
     /// <summary>
@@ -225,5 +223,45 @@ public class PointOfInterestManager : MonoBehaviour, IPointOfInterestProvider
         pOISnapshots.Sort((a, b) => a.distance.CompareTo(b.distance));
         return pOISnapshots;
     }
+
+    private void OnApplicationSetup()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationSetup -= OnApplicationSetup;
+
+        _csvWords.Clear();
+
+        // Primary source: config (poi_text_list)
+        var cs = ConfigService.Instance;
+        if (cs != null && cs.PoiTextList != null && cs.PoiTextList.Count > 0)
+        {
+            _csvWords.AddRange(cs.PoiTextList);
+        }
+        else
+        {
+            Debug.LogWarning("[POI] ConfigService has no poi_text_list; labels will be empty.");
+            // (Optionally pad with 15 empties)
+            for (int i = 0; i < 15; i++) _csvWords.Add("");
+        }
+
+        AssignTextFromCsv();
+        // Optional: if your text layout depends on content width
+        // RepositionAllTextGroups();
+    }
+
+    private void OnApplicationRun()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationRun -= OnApplicationRun;
+        // No-op needed here for POIs
+    }
+
+    private void OnApplicationEnd()
+    {
+        if (Director.Instance != null)
+            Director.Instance.OnApplicationEnd -= OnApplicationEnd;
+        // No-op needed here for POIs
+    }
+
 
 }
