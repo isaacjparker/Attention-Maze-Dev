@@ -269,6 +269,8 @@ public class TelemetryManager : MonoBehaviour
             Director.Instance.OnApplicationRun -= OnApplicationRun;
 
         _isRunning = true;
+
+        _posterSource?.TriggerWarmUpServer();
     }
 
     private void OnApplicationEnd()
