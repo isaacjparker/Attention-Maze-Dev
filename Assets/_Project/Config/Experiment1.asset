@@ -20,7 +20,7 @@ MonoBehaviour:
   ManualLocomotion: 1
   LocomotionSpeed: 5
   ManualLook: 1
-  LookSpeed: 5
+  LookSpeed: 50
   MaxViewAngle: 45
   CornerTurnSpeed: 1
   ReturnViewToCenter: 0

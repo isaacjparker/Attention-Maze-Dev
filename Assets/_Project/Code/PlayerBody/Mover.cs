@@ -129,6 +129,7 @@ public class Mover : MonoBehaviour
         {
             Debug.Log("Stopping movement");
             canMove = false;  // Stop movement
+            Director.Instance.TriggerEnd();
             return;
         }
 

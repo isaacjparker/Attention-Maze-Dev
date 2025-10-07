@@ -237,6 +237,34 @@ public class TelemetryManager : MonoBehaviour
         _rowPoster.PostRow(csvRow);
     }
 
+    public void LinkToWebPage()
+    {
+        string url = ConfigService.Instance.LinkButtonURL; // from config
+
+        // If URL is empty, “exit the app” instead.
+#if UNITY_WEBGL && !UNITY_EDITOR
+    if (!string.IsNullOrWhiteSpace(url))
+    {
+        Application.OpenURL(url); // opens new tab/window (gesture-driven, allowed)
+    }
+    else
+    {
+        // WebGL can’t close the tab; show a message or leave the end panel up.
+        Debug.Log("[TelemetryManager] No URL set; in WebGL we cannot quit. Ask user to close the tab.");
+    }
+#else
+        if (!string.IsNullOrWhiteSpace(url))
+        {
+            Application.OpenURL(url);
+        }
+        else
+        {
+            Application.Quit();
+        }
+#endif
+    }
+
+
     // Convenience wrappers for callers that prefer semantic names.
     //public void PublishCheckpoint(EventKind checkpointType) => Publish(checkpointType);
     public void PublishSpaceBar() => Publish(EventKind.Spacebar);
@@ -259,6 +287,7 @@ public class TelemetryManager : MonoBehaviour
 
             string serverUrl = ConfigService.Instance.ServerURL;
             string warmupUrl = ConfigService.Instance.WarmupURL;
+            string exitButtonUrl = ConfigService.Instance.LinkButtonURL;
             _posterSource?.SetEndPoints(serverUrl, warmupUrl);
         }
 

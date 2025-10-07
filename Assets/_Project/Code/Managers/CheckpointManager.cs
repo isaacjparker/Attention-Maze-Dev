@@ -32,6 +32,8 @@ public class CheckpointManager : MonoBehaviour
     // Optional singleton getter (stay consistent with previous pattern)
     public static CheckpointManager Instance { get; private set; }
 
+    public event Action EndOfMaze;
+
     // ------------------------------------------------------------------  
     // Initialisation
     // ------------------------------------------------------------------  
@@ -72,8 +74,6 @@ public class CheckpointManager : MonoBehaviour
 
         // 1) Fire Telemtry
         TelemetryManager.Instance?.PublishCheckpoint();
-
-
     }
 
 }

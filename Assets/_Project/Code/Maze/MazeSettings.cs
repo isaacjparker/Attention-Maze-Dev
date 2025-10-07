@@ -48,6 +48,10 @@ public class MazeSettings : ScriptableObject
     public string ServerURL = "";   // required for posting
     public string WarmupURL = "";   // optional GET health/warmup
 
+    // Dialogue
+    [Header("General Dialogue")]
+    public int DialogueTextSize = 42;
+
     // UI / Start Dialogue
     [Header("Start Dialogue")]
     public bool ShowStartDialogueScreen;
@@ -61,9 +65,8 @@ public class MazeSettings : ScriptableObject
     public bool ShowEndDialogueScreen;
     [TextArea(3, 8)] public string EndDialogueText;
     public DialogueAlignment EndDialogueAlignment = DialogueAlignment.JUSTIFY;
-    public bool ShowExitButton = true;
+    public string ExitButtonText = "Continue To Questionnaire";
     public float AutoExitTimer = -1f;
-    public bool ShowLinkButton = false;
     public string LinkButtonURL;
 
     // Existing field you already had

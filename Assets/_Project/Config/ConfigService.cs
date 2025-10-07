@@ -31,7 +31,7 @@ public class ConfigService : MonoBehaviour
     public string ConfigName => current?.ConfigName ?? defaultsSO.ConfigName;
     public string Version => current?.Version ?? defaultsSO.Version;
 
-    // Looging
+    // Logging
     public bool AutoLogging => current?.AutoLogging ?? defaultsSO.AutoLogging;
     public float AutoLoggingIntervalSec => current?.AutoLoggingIntervalSec ?? defaultsSO.AutoLoggingIntervalSec;
     public bool ManualLogging => current?.ManualLogging ?? defaultsSO.ManualLogging;
@@ -59,6 +59,9 @@ public class ConfigService : MonoBehaviour
     public string ServerURL => current?.ServerURL ?? defaultsSO.ServerURL;
     public string WarmupURL => current?.WarmupURL ?? defaultsSO.WarmupURL;
 
+    // Dialogue Settings
+    public int DialogueTextSize => current?.DialogueTextSize ?? defaultsSO.DialogueTextSize;
+
     // Start Dialogue Screen Settings
     public bool ShowStartDialogueScreen => current?.ShowStartDialogueScreen ?? defaultsSO.ShowStartDialogueScreen;
     public string StartDialogueText => current?.StartDialogueText ?? defaultsSO.StartDialogueText;
@@ -70,11 +73,10 @@ public class ConfigService : MonoBehaviour
     public bool ShowEndDialogueScreen => current?.ShowEndDialogueScreen ?? defaultsSO.ShowEndDialogueScreen;
     public string EndDialogueText => current?.EndDialogueText ?? defaultsSO.EndDialogueText;
     public DialogueAlignment EndDialogueAlignment => current?.EndDialogueAlignment ?? defaultsSO.EndDialogueAlignment;
-    public bool ShowExitButton => current?.ShowExitButton ?? defaultsSO.ShowExitButton;
+    public string ExitButtonText => current?.ExitButtonText ?? defaultsSO.ExitButtonText;
     public float AutoExitTimer => current?.AutoExitTimer ?? defaultsSO.AutoExitTimer;
 
     // URL Button Settings
-    public bool ShowLinkButton => current?.ShowLinkButton ?? defaultsSO.ShowLinkButton;
     public string LinkButtonURL => current?.LinkButtonURL ?? defaultsSO.LinkButtonURL;
     
     // Provenance
@@ -123,6 +125,9 @@ public class ConfigService : MonoBehaviour
             ["server_url"] = NullSafe(defaultsSO.ServerURL),
             ["warmup_url"] = NullSafe(defaultsSO.WarmupURL),
 
+            // dialogue
+            ["dialogue_text_size"] = defaultsSO.DialogueTextSize.ToString("0", CultureInfo.InvariantCulture),
+
             // start dialogue
             ["show_start_dialogue_screen"] = defaultsSO.ShowStartDialogueScreen ? "true" : "false",
             ["start_dialogue_text"] = NullSafe(defaultsSO.StartDialogueText),
@@ -134,9 +139,8 @@ public class ConfigService : MonoBehaviour
             ["show_end_dialogue_screen"] = defaultsSO.ShowEndDialogueScreen ? "true" : "false",
             ["end_dialogue_text"] = NullSafe(defaultsSO.EndDialogueText),
             ["end_dialogue_alignment"] = defaultsSO.EndDialogueAlignment.ToString().ToUpperInvariant(),
-            ["show_exit_button"] = defaultsSO.ShowExitButton ? "true" : "false",
+            ["exit_button_text"] = NullSafe(defaultsSO.ExitButtonText),
             ["auto_exit_timer"] = defaultsSO.AutoExitTimer.ToString("0.###", CultureInfo.InvariantCulture),
-            ["show_link_button"] = defaultsSO.ShowLinkButton ? "true" : "false",
             ["link_button_url"] = NullSafe(defaultsSO.LinkButtonURL)
         };
 
@@ -207,6 +211,13 @@ public class ConfigService : MonoBehaviour
             Debug.LogWarning("[ConfigService] server_url is empty. Telemetry post will fail until provided.");
         string warmupUrl = CoerceString(GetOr(merged, "warmup_url", GetOrOrEmpty(fallbackSnapshot, "warmup_url"))); // optional
 
+        // dialogue
+        int dialogueTextSize = Mathf.Clamp(
+                CoerceInt(GetOr(merged, "dialogue_text_size", fallbackSnapshot["dialogue_text_size"]),
+                defaultsSO.DialogueTextSize),
+                8, 200); // sensible bounds
+
+
         // start dialogue
         bool showStart = CoerceBool(GetOr(merged, "show_start_dialogue_screen", fallbackSnapshot["show_start_dialogue_screen"]), defaultsSO.ShowStartDialogueScreen);
         string startText = CoerceString(GetOr(merged, "start_dialogue_text", fallbackSnapshot["start_dialogue_text"]));
@@ -218,10 +229,10 @@ public class ConfigService : MonoBehaviour
         bool showEnd = CoerceBool(GetOr(merged, "show_end_dialogue_screen", fallbackSnapshot["show_end_dialogue_screen"]), defaultsSO.ShowEndDialogueScreen);
         string endText = CoerceString(GetOr(merged, "end_dialogue_text", fallbackSnapshot["end_dialogue_text"]));
         var endAlign = CoerceEnum(GetOr(merged, "end_dialogue_alignment", fallbackSnapshot["end_dialogue_alignment"]), defaultsSO.EndDialogueAlignment);
-        bool showExitBtn = CoerceBool(GetOr(merged, "show_exit_button", fallbackSnapshot["show_exit_button"]), defaultsSO.ShowExitButton);
+        string exitBtnText = CoerceString(GetOr(merged, "exit_button_text", fallbackSnapshot["exit_button_text"]));
         float autoExit = CoerceFloat(GetOr(merged, "auto_exit_timer", fallbackSnapshot["auto_exit_timer"]), defaultsSO.AutoExitTimer);
-        bool showLinkBtn = CoerceBool(GetOr(merged, "show_link_button", fallbackSnapshot["show_link_button"]), defaultsSO.ShowLinkButton);
         string linkUrl = CoerceString(GetOr(merged, "link_button_url", fallbackSnapshot["link_button_url"]));
+        linkUrl = linkUrl?.Trim();
 
         // 4) Freeze snapshot (stringified for easy logging)
         Dictionary<string, string> snap = new Dictionary<string, string>
@@ -255,6 +266,9 @@ public class ConfigService : MonoBehaviour
             ["server_url"] = serverUrl,
             ["warmup_url"] = warmupUrl,
 
+            // dialogue
+            ["dialogue_text_size"] = dialogueTextSize.ToString("0", CultureInfo.InvariantCulture),
+
             // start dialogue
             ["show_start_dialogue_screen"] = showStart ? "true" : "false",
             ["start_dialogue_text"] = startText,
@@ -266,9 +280,8 @@ public class ConfigService : MonoBehaviour
             ["show_end_dialogue_screen"] = showEnd ? "true" : "false",
             ["end_dialogue_text"] = endText,
             ["end_dialogue_alignment"] = endAlign.ToString().ToUpperInvariant(),
-            ["show_exit_button"] = showExitBtn ? "true" : "false",
+            ["exit_button_text"] = exitBtnText,
             ["auto_exit_timer"] = autoExit.ToString("0.###", CultureInfo.InvariantCulture),
-            ["show_link_button"] = showLinkBtn ? "true" : "false",
             ["link_button_url"] = linkUrl
         };
 
@@ -286,10 +299,12 @@ public class ConfigService : MonoBehaviour
             poiList,
             // networking
             serverUrl, warmupUrl,
+            // dialogue
+            dialogueTextSize,
             // start dialogue
             showStart, startText, startAlign, showStartBtn, autoStart,
             // end dialogue
-            showEnd, endText, endAlign, showExitBtn, autoExit, showLinkBtn, linkUrl,
+            showEnd, endText, endAlign, exitBtnText, autoExit, linkUrl,
             // provenance
             csvName, snap
         );
@@ -307,6 +322,22 @@ public class ConfigService : MonoBehaviour
 
     private static string GetOrOrEmpty(Dictionary<string, string> d, string key)
         => d.TryGetValue(key, out var v) ? v : "";
+
+    private static int CoerceInt(string s, int fallback)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return fallback;
+
+        // Accept plain integers
+        if (int.TryParse(s.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var i))
+            return i;
+
+        // Be forgiving: accept floats like "42.0" and round
+        if (float.TryParse(s.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var f))
+            return Mathf.RoundToInt(f);
+
+        return fallback;
+    }
+
 
     private static bool CoerceBool(string s, bool fallback)
     {

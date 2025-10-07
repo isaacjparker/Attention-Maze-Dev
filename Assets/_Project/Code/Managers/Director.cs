@@ -96,9 +96,19 @@ public class Director : MonoBehaviour
 
     private void EndApplication()
     {
-        if (_endEmitted) return;
-        if (!_runEmitted) return;
+        if (_endEmitted)
+        {
+            Debug.Log("End already emitted");
+            return;
+        }
 
+        if (!_runEmitted)
+        {
+            Debug.Log("Trying to end but run never emitted.");
+            return;
+        }
+
+        Debug.Log("Director emitting end");
         _endEmitted = true;
         OnApplicationEnd?.Invoke();
     }

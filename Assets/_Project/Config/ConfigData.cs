@@ -44,6 +44,9 @@ public class ConfigData
     public readonly string ServerURL;
     public readonly string WarmupURL;
 
+    // Dialogue
+    public readonly int DialogueTextSize;
+
     // Start Dialogue
     public readonly bool ShowStartDialogueScreen;
     public readonly string StartDialogueText;
@@ -55,9 +58,8 @@ public class ConfigData
     public readonly bool ShowEndDialogueScreen;
     public readonly string EndDialogueText;
     public readonly DialogueAlignment EndDialogueAlignment;
-    public readonly bool ShowExitButton;
+    public readonly string ExitButtonText;
     public readonly float AutoExitTimer;
-    public readonly bool ShowLinkButton;
     public readonly string LinkButtonURL;
     
     
@@ -98,6 +100,9 @@ public class ConfigData
         string serverURL,
         string warmupURL,
 
+        // dialogue
+        int dialogueTextSize,
+
         // start dialogue
         bool showStartDialogueScreen,
         string startDialogueText,
@@ -109,9 +114,8 @@ public class ConfigData
         bool showEndDialogueScreen,
         string endDialogueText,
         DialogueAlignment endDialogueAlignment,
-        bool showExitButton,
+        string exitButtonText,
         float autoExitTimer,
-        bool showLinkButton,
         string linkButtonURL,
 
         // provenance
@@ -150,6 +154,9 @@ public class ConfigData
         ServerURL = serverURL;
         WarmupURL = warmupURL;
 
+        // dialogue
+        DialogueTextSize = dialogueTextSize;
+
         // start dialogue
         ShowStartDialogueScreen = showStartDialogueScreen;
         StartDialogueText = startDialogueText;
@@ -161,9 +168,8 @@ public class ConfigData
         ShowEndDialogueScreen = showEndDialogueScreen;
         EndDialogueText = endDialogueText;
         EndDialogueAlignment = endDialogueAlignment;
-        ShowExitButton = showExitButton;
+        ExitButtonText = exitButtonText;
         AutoExitTimer = autoExitTimer;
-        ShowLinkButton = showLinkButton;
         LinkButtonURL = linkButtonURL;
 
         // provenance
